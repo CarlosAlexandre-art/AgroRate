@@ -22,3 +22,87 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* ── Scroll reveal ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-delay-5 { transition-delay: 0.5s; }
+
+/* ── Hero entrance ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+.anim-fade-up   { animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) forwards; }
+.anim-fade-in   { animation: fadeIn 0.6s ease forwards; }
+.anim-scale-in  { animation: scaleIn 0.7s cubic-bezier(0.16,1,0.3,1) forwards; }
+.anim-float     { animation: floatY 4s ease-in-out infinite; }
+.anim-d1 { animation-delay: 0.1s; }
+.anim-d2 { animation-delay: 0.2s; }
+.anim-d3 { animation-delay: 0.35s; }
+.anim-d4 { animation-delay: 0.5s; }
+.anim-d5 { animation-delay: 0.65s; }
+.anim-d6 { animation-delay: 0.8s; }
+
+/* ── 3D card ── */
+.card-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  will-change: transform;
+}
+
+/* ── Gauge fill animation ── */
+@keyframes gaugeFill {
+  from { stroke-dashoffset: 100%; }
+  to   { stroke-dashoffset: 0; }
+}
+.gauge-path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: gaugeAnim 1.4s cubic-bezier(0.16,1,0.3,1) 0.4s forwards;
+}
+@keyframes gaugeAnim {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ── Gradient text shimmer ── */
+.text-shimmer {
+  background: linear-gradient(90deg, #065f46, #059669, #34d399, #059669, #065f46);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
