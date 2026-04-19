@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Nav from '@/components/Nav'
+import Logo from '@/components/Logo'
 import ScrollReveal from '@/components/ScrollReveal'
 import FeatureCard3D from '@/components/FeatureCard3D'
 import RevealOnScroll from '@/components/RevealOnScroll'
@@ -408,15 +409,7 @@ export default function Home() {
       <footer className="border-t border-slate-100 px-6 py-10">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-[#065f46] rounded-lg flex items-center justify-center">
-                <span className="text-white font-black text-xs">AR</span>
-              </div>
-              <div>
-                <div className="font-bold text-slate-800">AgroRate</div>
-                <div className="text-xs text-slate-400">Parte do ecossistema AgroCore</div>
-              </div>
-            </div>
+            <Logo size={32} />
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-400">
               <Link href="/como-funciona" className="hover:text-slate-600 transition-colors">Como funciona</Link>
               <Link href="/score" className="hover:text-slate-600 transition-colors">Meu Score</Link>
