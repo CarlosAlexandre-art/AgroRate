@@ -107,7 +107,7 @@ export default function HistoricoPage() {
           <div className="text-3xl mb-3">📊</div>
           <div className="font-semibold text-slate-700 mb-2">Sem histórico ainda</div>
           <p className="text-slate-400 text-sm mb-4">Configure sua propriedade no AgroOS para começar a gerar histórico de score.</p>
-          <a href="https://agroos.vercel.app" target="_blank" rel="noopener noreferrer"
+          <a href="https://agros-os.vercel.app" target="_blank" rel="noopener noreferrer"
             className="inline-block bg-[#065f46] text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-[#047857] transition-colors">
             Ir para o AgroOS →
           </a>

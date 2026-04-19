@@ -123,7 +123,7 @@ export default function DashboardPage() {
         <div className="text-3xl mb-3">⚠️</div>
         <div className="text-red-700 font-semibold mb-2">Sem dados de fazenda</div>
         <p className="text-red-600 text-sm mb-4">{error || 'Configure sua propriedade no AgroOS para gerar seu score.'}</p>
-        <a href="https://agroos.vercel.app" target="_blank" rel="noopener noreferrer"
+        <a href="https://agros-os.vercel.app" target="_blank" rel="noopener noreferrer"
           className="inline-block bg-[#065f46] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#047857] transition-colors text-sm">
           Ir para o AgroOS →
         </a>

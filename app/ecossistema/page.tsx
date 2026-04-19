@@ -20,7 +20,7 @@ const SYSTEMS = [
     color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
     badge: 'bg-emerald-100 text-emerald-700',
     dot: 'bg-emerald-500',
-    href: 'https://agroos.vercel.app',
+    href: 'https://agros-os.vercel.app',
     desc: 'Centraliza planejamento, controle financeiro, gestão de equipe e operações da propriedade. Integrado com IA para alertas, relatórios e planejamento de safra.',
     role: 'Controla a operação',
     contribution: 'Fornece dados financeiros e operacionais que alimentam o score AgroRate',
@@ -150,7 +150,7 @@ export default function EcossistemaPage() {
             <Link href="/cadastro" className="bg-[#065f46] text-white font-bold px-8 py-4 rounded-2xl hover:bg-[#047857] transition-all shadow-lg hover:-translate-y-0.5">
               Começar com o AgroRate
             </Link>
-            <a href="https://agroos.vercel.app" target="_blank" rel="noopener noreferrer"
+            <a href="https://agros-os.vercel.app" target="_blank" rel="noopener noreferrer"
               className="border-2 border-slate-200 text-slate-700 font-semibold px-8 py-4 rounded-2xl hover:border-[#065f46] hover:text-[#065f46] transition-all">
               Conhecer o AgroOS →
             </a>

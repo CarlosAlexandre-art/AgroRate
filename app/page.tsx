@@ -354,7 +354,7 @@ export default function Home() {
                       className="inline-flex items-center justify-center gap-2 bg-[#065f46] text-white font-bold px-5 py-3 rounded-xl hover:bg-[#047857] transition-colors text-sm">
                       Acessar AgroCore
                     </a>
-                    <a href="https://agroos.vercel.app" target="_blank" rel="noopener noreferrer"
+                    <a href="https://agros-os.vercel.app" target="_blank" rel="noopener noreferrer"
                       className="inline-flex items-center justify-center gap-2 bg-white/10 text-white font-semibold px-5 py-3 rounded-xl hover:bg-white/15 transition-colors text-sm border border-white/10">
                       Acessar AgroOS
                     </a>
@@ -422,7 +422,7 @@ export default function Home() {
               <Link href="/score" className="hover:text-slate-600 transition-colors">Meu Score</Link>
               <Link href="/parceiros" className="hover:text-slate-600 transition-colors">Parceiros</Link>
               <a href="https://agrolink-opal.vercel.app" target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">AgroCore</a>
-              <a href="https://agroos.vercel.app" target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">AgroOS</a>
+              <a href="https://agros-os.vercel.app" target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">AgroOS</a>
             </div>
           </div>
           <div className="mt-8 pt-6 border-t border-slate-100 text-center text-xs text-slate-300">

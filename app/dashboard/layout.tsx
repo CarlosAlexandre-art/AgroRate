@@ -66,7 +66,7 @@ const NAV = [
         ),
       },
       {
-        href: 'https://agroos.vercel.app',
+        href: 'https://agros-os.vercel.app',
         label: 'AgroOS',
         external: true,
         icon: (
