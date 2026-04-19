@@ -130,15 +130,58 @@ export default function DashboardPage() {
   )
 
   if (error || !data) return (
-    <div className="p-6 max-w-xl mx-auto pt-12">
-      <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center shadow-sm">
-        <div className="text-4xl mb-4">🌾</div>
-        <h2 className="text-xl font-bold text-slate-800 mb-2">Conecte sua fazenda</h2>
-        <p className="text-slate-500 text-sm mb-6 leading-relaxed">Configure sua propriedade no AgroOS para gerar seu score de crédito rural automaticamente.</p>
-        <a href="https://agros-os.vercel.app" target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-[#065f46] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#047857] transition-colors">
-          Ir para o AgroOS →
-        </a>
+    <div className="p-5 max-w-2xl mx-auto pt-8 space-y-4">
+      <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-2xl flex-shrink-0">🌾</div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-800 mb-1">Configure sua fazenda para gerar o score</h2>
+            <p className="text-slate-500 text-sm leading-relaxed">
+              Seu score AgroRate é calculado automaticamente com base nos dados da sua propriedade no AgroOS. Siga os 3 passos abaixo para começar.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {[
+            { step: '01', icon: '🖥️', title: 'Acesse o AgroOS', desc: 'Entre em agros-os.vercel.app com o mesmo e-mail e senha do AgroRate. É a mesma conta.', href: 'https://agros-os.vercel.app', action: 'Abrir AgroOS' },
+            { step: '02', icon: '🏡', title: 'Cadastre sua propriedade', desc: 'Crie uma propriedade, adicione os talhões (áreas de cultivo) e registre os membros da equipe.', href: null, action: null },
+            { step: '03', icon: '💰', title: 'Registre receitas e custos', desc: 'Adicione pelo menos uma receita de colheita e seus custos operacionais. O score é calculado automaticamente em segundos.', href: null, action: null },
+          ].map((s, i) => (
+            <div key={s.step} className="flex gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="flex flex-col items-center gap-1">
+                <div className="w-8 h-8 rounded-xl bg-[#065f46] flex items-center justify-center text-white text-xs font-black flex-shrink-0">{s.step}</div>
+                {i < 2 && <div className="w-px h-4 bg-slate-200"/>}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span>{s.icon}</span>
+                  <div className="font-semibold text-slate-800 text-sm">{s.title}</div>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed">{s.desc}</p>
+                {s.href && (
+                  <a href={s.href} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold text-white bg-[#065f46] px-3 py-1.5 rounded-lg hover:bg-[#047857] transition-colors">
+                    {s.action} →
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3">
+        <span className="text-xl flex-shrink-0">💡</span>
+        <div>
+          <div className="font-semibold text-blue-800 text-sm mb-0.5">Já tem dados no AgroOS?</div>
+          <p className="text-xs text-blue-700 leading-relaxed">
+            Se você já cadastrou sua propriedade e tem receitas registradas, o score pode levar até 1 minuto para carregar. Recarregue a página após alguns instantes.
+          </p>
+          <button onClick={() => window.location.reload()} className="mt-2 text-xs font-bold text-blue-700 border border-blue-300 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
+            Recarregar agora
+          </button>
+        </div>
       </div>
     </div>
   )

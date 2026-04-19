@@ -35,7 +35,7 @@ const calcParcela = (p: number, r: number, n: number) => {
 
 export default function CreditoPage() {
   const [score, setScore] = useState<number | null>(null)
-  const [amount, setAmount] = useState(80000)
+  const [amount, setAmount] = useState(100000)
   const [selected, setSelected] = useState<Offer | null>(null)
   const [modal, setModal] = useState(false)
   const [sent, setSent] = useState(false)
@@ -100,12 +100,12 @@ export default function CreditoPage() {
               <span className="font-bold text-[#065f46] text-lg">{fmt(amount)}</span>
             </div>
             <input
-              type="range" min="10000" max="200000" step="5000" value={amount}
+              type="range" min="10000" max="1000000" step="10000" value={amount}
               onChange={e => setAmount(Number(e.target.value))}
               className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#065f46]"
             />
             <div className="flex justify-between text-xs text-slate-400 mt-1">
-              <span>R$ 10k</span><span>R$ 200k</span>
+              <span>R$ 10k</span><span>R$ 1M</span>
             </div>
           </div>
           <div className="w-px h-12 bg-slate-200 hidden md:block" />

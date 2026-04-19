@@ -72,7 +72,7 @@ export default function IAPage() {
       {/* Context bar */}
       {scoreData && (
         <div className="bg-violet-50 border-b border-violet-100 px-5 py-2.5 flex items-center gap-4 text-xs flex-shrink-0">
-          <span className="text-violet-600 font-semibold">🤖 IA conectada ao seu perfil:</span>
+          <span className="text-violet-600 font-semibold">🌾 IA conectada ao seu perfil:</span>
           <span className="text-violet-700 font-bold">Score {scoreData.score}</span>
           <span className="text-violet-500">·</span>
           <span className="text-violet-600">Produção {scoreData.productionScore}</span>
@@ -89,7 +89,7 @@ export default function IAPage() {
         {/* Mensagem de boas-vindas */}
         {msgs.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
-            <div className="w-16 h-16 rounded-2xl bg-violet-100 flex items-center justify-center text-3xl mb-4">🤖</div>
+            <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center text-3xl mb-4">🌾</div>
             <h2 className="text-xl font-bold text-slate-800 mb-2">Conselheiro AgroRate</h2>
             <p className="text-slate-500 text-sm max-w-sm leading-relaxed mb-6">
               {loadingScore
@@ -117,7 +117,7 @@ export default function IAPage() {
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0 ${
               msg.role === 'ai' ? 'bg-violet-100 text-violet-600' : 'bg-[#065f46] text-white text-xs font-bold'
             }`}>
-              {msg.role === 'ai' ? '🤖' : 'Eu'}
+              {msg.role === 'ai' ? '🌾' : 'Eu'}
             </div>
             <div className={`max-w-[75%] ${msg.role === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
               <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
@@ -137,7 +137,7 @@ export default function IAPage() {
         {/* Loading */}
         {loading && (
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center text-sm flex-shrink-0">🤖</div>
+            <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center text-sm flex-shrink-0">🌾</div>
             <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-violet-300 animate-bounce" style={{ animationDelay: '0ms' }}/>

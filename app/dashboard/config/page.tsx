@@ -17,11 +17,22 @@ const CONSENTS = [
 
 export default function ConfigPage() {
   const [user, setUser] = useState<UserData | null>(null)
-  const [consents, setConsents] = useState<Record<string, boolean>>({
-    sicredi: false, bb: false, sicoob: false, bradesco: false, santander: false, agrocred: false,
-  })
+  const STORAGE_KEY = 'agrorate_consents'
+  const defaultConsents = { sicredi: false, bb: false, sicoob: false, bradesco: false, santander: false, agrocred: false }
+  const [consents, setConsents] = useState<Record<string, boolean>>(defaultConsents)
   const [saved, setSaved] = useState(false)
   const [consentAll, setConsentAll] = useState(false)
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setConsents(parsed)
+        setConsentAll(Object.values(parsed).every(Boolean))
+      }
+    } catch { /* ignore */ }
+  }, [])
   const router = useRouter()
 
   useEffect(() => {
@@ -47,6 +58,7 @@ export default function ConfigPage() {
   }
 
   function handleSave() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(consents)) } catch { /* ignore */ }
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
   }
