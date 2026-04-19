@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Modelos compartilhados com AgroOS (mesmo banco) ─────────────────────────
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  OPERATOR
+}
+
+enum ActivityStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  LATE
+  CANCELLED
+}
+
+enum CostCategory {
+  INSUMO
+  MAO_DE_OBRA
+  MAQUINARIO
+  AGROLINK
+  OUTROS
+}
+
+model User {
+  id               String    @id @default(uuid())
+  supabaseId       String    @unique
+  name             String
+  email            String    @unique
+  role             UserRole  @default(MANAGER)
+  plan             String    @default("starter")
+  stripeCustomerId String?
+  avatarUrl        String?
+  phone            String?
+  properties       Property[]
+  createdAt        DateTime  @default(now())
+}
+
+model Property {
+  id             String          @id @default(uuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  location       String?
+  sizeHectares   Decimal         @default(0)
+  coverUrl       String?
+  fields         Field[]
+  activities     Activity[]
+  costs          Cost[]
+  revenues       Revenue[]
+  teamMembers    TeamMember[]
+  goals          Goal[]
+  agroRate       AgroRate?
+  creditRequests CreditRequest[]
+  createdAt      DateTime        @default(now())
+}
+
+model Revenue {
+  id          String   @id @default(uuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  amount      Decimal
+  category    String   @default("VENDA")
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model Field {
+  id           String     @id @default(uuid())
+  propertyId   String
+  property     Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name         String
+  sizeHectares Decimal    @default(0)
+  activities   Activity[]
+}
+
+model Activity {
+  id           String         @id @default(uuid())
+  propertyId   String
+  property     Property       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  fieldId      String?
+  field        Field?         @relation(fields: [fieldId], references: [id])
+  assignedToId String?
+  assignedTo   TeamMember?    @relation(fields: [assignedToId], references: [id])
+  type         String
+  description  String?
+  status       ActivityStatus @default(PENDING)
+  startDate    DateTime
+  endDate      DateTime?
+  costs        Cost[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Cost {
+  id          String       @id @default(uuid())
+  propertyId  String
+  property    Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  activityId  String?
+  activity    Activity?    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  amount      Decimal
+  category    CostCategory @default(OUTROS)
+  description String?
+  date        DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+}
+
+model TeamMember {
+  id         String     @id @default(uuid())
+  propertyId String
+  property   Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name       String
+  role       String
+  phone      String?
+  activities Activity[]
+  createdAt  DateTime   @default(now())
+}
+
+model Goal {
+  id           String   @id @default(uuid())
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  title        String
+  type         String   @default("REVENUE")
+  targetValue  Decimal
+  currentValue Decimal  @default(0)
+  deadline     DateTime?
+  isCompleted  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ─── Modelos AgroRate ─────────────────────────────────────────────────────────
+
+enum ScoreCategory {
+  ELITE
+  HIGH
+  GOOD
+  REGULAR
+  LOW
+  CRITICAL
+}
+
+model AgroRate {
+  id                String        @id @default(uuid())
+  propertyId        String        @unique
+  property          Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  score             Int           @default(500)
+  category          ScoreCategory @default(REGULAR)
+  productionScore   Int           @default(0)
+  efficiencyScore   Int           @default(0)
+  behaviorScore     Int           @default(0)
+  operationalScore  Int           @default(0)
+  totalRevenue      Decimal       @default(0)
+  totalCosts        Decimal       @default(0)
+  productivity      Decimal       @default(0)
+  marginRate        Decimal       @default(0)
+  activityCount     Int           @default(0)
+  paymentOnTimeRate Decimal       @default(0)
+  dataCompleteness  Decimal       @default(0)
+  benchmarkComparison Json?       @default("{}")
+  trendHistory      Json?         @default("[]")
+  lastCalculated    DateTime      @default(now())
+  nextUpdate        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+enum CreditRequestStatus {
+  PENDING
+  ANALYZING
+  APPROVED
+  REJECTED
+  CANCELLED
+  CONTRACTED
+}
+
+model CreditRequest {
+  id              String              @id @default(uuid())
+  propertyId      String
+  property        Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  partnerId       String?
+  partner         CreditPartner?      @relation(fields: [partnerId], references: [id])
+  requestedAmount Decimal
+  approvedAmount  Decimal?
+  interestRate    Decimal?
+  termMonths      Int?
+  status          CreditRequestStatus @default(PENDING)
+  rejectionReason String?
+  proposals       Json?               @default("[]")
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+model CreditPartner {
+  id          String          @id @default(uuid())
+  name        String
+  type        String          @default("BANK")
+  logoUrl     String?
+  apiEndpoint String?
+  apiKey      String?
+  isActive    Boolean         @default(true)
+  priority    Int             @default(0)
+  requests    CreditRequest[]
+  offers      CreditOffer[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model CreditOffer {
+  id          String        @id @default(uuid())
+  partnerId   String
+  partner     CreditPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  minScore    Int           @default(0)
+  maxScore    Int           @default(1000)
+  minAmount   Decimal       @default(0)
+  maxAmount   Decimal       @default(1000000)
+  minRate     Decimal
+  maxRate     Decimal
+  minTerm     Int           @default(1)
+  maxTerm     Int           @default(60)
+  requirements Json?        @default("{}")
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
