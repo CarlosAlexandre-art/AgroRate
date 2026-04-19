@@ -98,11 +98,11 @@ export default function Home() {
               className="inline-flex items-center justify-center bg-[#065f46] text-white font-bold text-base px-8 py-4 rounded-2xl hover:bg-[#047857] transition-all shadow-xl shadow-emerald-900/20 hover:shadow-emerald-900/30 hover:-translate-y-0.5">
               Calcular meu score grátis
             </Link>
-            <a href="#como-funciona"
+            <Link href="/como-funciona"
               className="inline-flex items-center justify-center gap-2 border-2 border-slate-200 text-slate-700 font-semibold text-base px-8 py-4 rounded-2xl hover:border-[#065f46] hover:text-[#065f46] transition-all bg-white">
               <span className="w-2.5 h-2.5 rounded-full bg-[#065f46]" />
               Como funciona
-            </a>
+            </Link>
           </div>
 
           {/* Stats */}
@@ -110,7 +110,7 @@ export default function Home() {
             {[
               { value: '6+', label: 'Parceiros financeiros' },
               { value: '1000', label: 'Pontos máximos de score' },
-              { value: 'R$ 0', label: 'Custo para começar' },
+              { value: 'R$ 10B+', label: 'Em crédito disponibilizado' },
             ].map(s => (
               <div key={s.label} className="text-center">
                 <div className="text-2xl sm:text-3xl font-bold text-[#0f172a]">{s.value}</div>
