@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAgrocoreData, calcAgrocoreBonus } from '@/lib/prisma-agrocore'
 
 const WEIGHTS = { production: 0.30, efficiency: 0.25, behavior: 0.25, operational: 0.20 }
 
@@ -123,7 +124,7 @@ export async function GET(request: NextRequest) {
 
     const property = await prisma.property.findUnique({
       where: { id: targetPropertyId! },
-      include: { revenues: true, costs: true, activities: { where: { status: 'DONE' } } },
+      include: { revenues: true, costs: true, fields: true, activities: { where: { status: 'DONE' } } },
     })
 
     const totalRevenue = property?.revenues.reduce((s, r) => s + Number(r.amount), 0) || 0
@@ -131,15 +132,25 @@ export async function GET(request: NextRequest) {
     const marginRate = totalRevenue > 0 ? (totalRevenue - totalCosts) / totalRevenue : 0
     const productivity = totalRevenue / (Number(property?.sizeHectares) || 1)
     const dataCompleteness =
-      ((property?.fields.length ?? 0) > 0 ? 20 : 0) +
+      ((property?.fields?.length ?? 0) > 0 ? 20 : 0) +
       (totalCosts > 0 ? 30 : 0) +
       (totalRevenue > 0 ? 30 : 0) +
-      ((property?.activities.length ?? 0) > 0 ? 20 : 0)
+      ((property?.activities?.length ?? 0) > 0 ? 20 : 0)
+
+    // Integração AgroCore: busca dados de serviços/reputação e aplica bônus no score
+    const supabaseIdForBonus = userId || null
+    let agrocoreBonus = 0
+    let agrocoreData = null
+    if (supabaseIdForBonus) {
+      agrocoreData = await getAgrocoreData(supabaseIdForBonus)
+      if (agrocoreData) agrocoreBonus = calcAgrocoreBonus(agrocoreData)
+    }
+    const finalScore = Math.min(1000, totalScore + agrocoreBonus)
 
     const agroRate = await prisma.agroRate.upsert({
       where: { propertyId: targetPropertyId! },
       update: {
-        score: totalScore, category: getCategory(totalScore),
+        score: finalScore, category: getCategory(finalScore),
         productionScore, efficiencyScore, behaviorScore, operationalScore,
         totalRevenue, totalCosts, productivity, marginRate,
         activityCount: property?.activities.length || 0,
@@ -149,7 +160,7 @@ export async function GET(request: NextRequest) {
       },
       create: {
         propertyId: targetPropertyId!,
-        score: totalScore, category: getCategory(totalScore),
+        score: finalScore, category: getCategory(finalScore),
         productionScore, efficiencyScore, behaviorScore, operationalScore,
         totalRevenue, totalCosts, productivity, marginRate,
         activityCount: property?.activities.length || 0,
@@ -159,7 +170,11 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(agroRate)
+    return NextResponse.json({
+      ...agroRate,
+      agrocoreBonus,
+      agrocoreConnected: agrocoreData !== null,
+    })
   } catch (error) {
     console.error('Erro AgroRate score:', error)
     return NextResponse.json({ error: 'Erro interno ao calcular score' }, { status: 500 })

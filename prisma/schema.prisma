@@ -60,6 +60,7 @@ model Property {
   goals          Goal[]
   agroRate       AgroRate?
   creditRequests CreditRequest[]
+  commissions    Commission[]
   createdAt      DateTime        @default(now())
 }
 
@@ -197,6 +198,7 @@ model CreditRequest {
   status          CreditRequestStatus @default(PENDING)
   rejectionReason String?
   proposals       Json?               @default("[]")
+  commission      Commission?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 }
@@ -234,4 +236,45 @@ model CreditOffer {
   isActive    Boolean       @default(true)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+}
+
+// ─── Modelo de monetização — comissões por originação de crédito ──────────────
+
+enum CommissionStatus {
+  PENDING    // lead gerado, aguardando resposta do banco
+  CONFIRMED  // banco confirmou análise
+  APPROVED   // crédito aprovado — comissão devida
+  PAID       // comissão recebida
+  REJECTED   // crédito reprovado — sem comissão
+}
+
+model Commission {
+  id              String           @id @default(uuid())
+  propertyId      String
+  property        Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  creditRequestId String?          @unique
+  creditRequest   CreditRequest?   @relation(fields: [creditRequestId], references: [id])
+  partnerName     String
+  partnerType     String           @default("BANK")
+  lineOfCredit    String
+  requestedAmount Decimal
+  approvedAmount  Decimal?
+  commissionRate  Decimal          @default(0.01)   // 1% padrão
+  commissionValue Decimal          @default(0)       // calculado no approve
+  status          CommissionStatus @default(PENDING)
+  paidAt          DateTime?
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+// ─── Log de webhooks n8n ──────────────────────────────────────────────────────
+
+model WebhookLog {
+  id        String   @id @default(uuid())
+  event     String
+  payload   Json
+  source    String   @default("n8n")
+  status    String   @default("received")
+  createdAt DateTime @default(now())
 }

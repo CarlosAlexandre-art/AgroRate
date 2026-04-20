@@ -15,34 +15,85 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/credito': 'Ofertas de Crédito',
   '/dashboard/parceiros': 'Parceiros Financeiros',
   '/dashboard/historico': 'Histórico do Score',
+  '/dashboard/simulacoes': 'Minhas Simulações',
+  '/dashboard/documentos': 'Documentos',
+  '/dashboard/relatorio': 'Relatório',
+  '/dashboard/alertas': 'Alertas',
   '/dashboard/ia': 'Conselheiro IA',
   '/dashboard/config': 'Configurações',
 }
 
-const NAV_MAIN = [
+const NAV: { group: string; items: { href: string; label: string; icon: React.ReactNode; badge?: string }[] }[] = [
   {
-    href: '/dashboard', label: 'Meu Score',
-    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-shrink-0"><path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20z" opacity=".2" fill="currentColor" stroke="none"/><path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20z"/><path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M12 10V6"/><path d="M17.7 14l-1.73-1"/></svg>,
+    group: 'Score',
+    items: [
+      {
+        href: '/dashboard',
+        label: 'Meu Score',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20z"/><path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M12 10V6"/><path d="M17.7 14l-1.73-1"/></svg>,
+      },
+      {
+        href: '/dashboard/historico',
+        label: 'Histórico',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+      },
+      {
+        href: '/dashboard/relatorio',
+        label: 'Relatório PDF',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+      },
+    ],
   },
   {
-    href: '/dashboard/credito', label: 'Crédito',
-    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-shrink-0"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/><path d="M7 15h2m4 0h2"/></svg>,
+    group: 'Crédito',
+    items: [
+      {
+        href: '/dashboard/credito',
+        label: 'Ofertas',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/><path d="M7 15h2m4 0h2"/></svg>,
+      },
+      {
+        href: '/dashboard/simulacoes',
+        label: 'Simulações',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M9 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-3"/><path d="M9 15h3l8.5-8.5a1.5 1.5 0 0 0-3-3L9 12v3"/><path d="M16 5l3 3"/></svg>,
+      },
+      {
+        href: '/dashboard/parceiros',
+        label: 'Parceiros',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+      },
+    ],
   },
   {
-    href: '/dashboard/parceiros', label: 'Parceiros',
-    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-shrink-0"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+    group: 'Gestão',
+    items: [
+      {
+        href: '/dashboard/documentos',
+        label: 'Documentos',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>,
+      },
+      {
+        href: '/dashboard/alertas',
+        label: 'Alertas',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+        badge: '3',
+      },
+    ],
   },
   {
-    href: '/dashboard/historico', label: 'Histórico',
-    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-shrink-0"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
-  },
-  {
-    href: '/dashboard/ia', label: 'Conselheiro IA',
-    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-shrink-0"><path d="M12 2a8 8 0 0 1 8 8v4a8 8 0 0 1-8 8H8l-4 2v-4a8 8 0 0 1 0-16z"/><path d="M8 12h8M8 8h5"/></svg>,
-  },
-  {
-    href: '/dashboard/config', label: 'Configurações',
-    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+    group: 'IA & Suporte',
+    items: [
+      {
+        href: '/dashboard/ia',
+        label: 'Conselheiro IA',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M12 2a8 8 0 0 1 8 8v4a8 8 0 0 1-8 8H8l-4 2v-4a8 8 0 0 1 0-16z"/><path d="M8 12h8M8 8h5"/></svg>,
+      },
+      {
+        href: '/dashboard/config',
+        label: 'Configurações',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+      },
+    ],
   },
 ]
 
@@ -51,16 +102,19 @@ const NAV_ECO = [
   { href: 'https://agros-os.vercel.app', label: 'AgroOS', dot: 'bg-emerald-400' },
 ]
 
-function NavItem({ href, label, icon, active, onClick }: { href: string; label: string; icon: React.ReactNode; active: boolean; onClick?: () => void }) {
+function NavItem({ href, label, icon, active, badge, onClick }: { href: string; label: string; icon: React.ReactNode; active: boolean; badge?: string; onClick?: () => void }) {
   return (
     <Link href={href} onClick={onClick}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-        active
-          ? 'bg-[#065f46] text-white shadow-sm shadow-emerald-900/20'
-          : 'text-slate-400 hover:text-white hover:bg-white/8'
+      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all group ${
+        active ? 'bg-[#065f46] text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/8'
       }`}>
-      <span className={active ? 'text-white' : 'text-slate-500 group-hover:text-white'}>{icon}</span>
-      {label}
+      <span className={active ? 'text-white' : 'text-slate-500 group-hover:text-white transition-colors'}>{icon}</span>
+      <span className="flex-1">{label}</span>
+      {badge && (
+        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-red-500 text-white'}`}>
+          {badge}
+        </span>
+      )}
     </Link>
   )
 }
@@ -102,9 +156,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const Sidebar = ({ mobile }: { mobile?: boolean }) => (
     <aside className={`flex flex-col bg-[#0f172a] h-full ${mobile ? 'w-72' : 'w-60'} border-r border-white/5`}>
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-white/8 flex-shrink-0">
+      <div className="px-5 py-4 border-b border-white/8 flex-shrink-0">
         <Link href="/" className="flex items-center gap-2.5">
-          <svg width={32} height={32} viewBox="0 0 36 36" fill="none">
+          <svg width={30} height={30} viewBox="0 0 36 36" fill="none">
             <rect width="36" height="36" rx="10" fill="#065f46"/>
             <path d="M9 22 A10 10 0 0 1 27 22" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.35" fill="none"/>
             <path d="M9 22 A10 10 0 0 1 24 14" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
@@ -114,33 +168,42 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <path d="M11 27 C13 25 15 24 16 22" stroke="#6ee7b7" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
           </svg>
           <div>
-            <div className="font-bold text-white text-base leading-none">AgroRate</div>
+            <div className="font-bold text-white text-sm leading-none">AgroRate</div>
             <div className="text-[10px] text-slate-500 mt-0.5 leading-none">Score de Crédito Rural</div>
           </div>
         </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-3 mb-2">Principal</div>
-        {NAV_MAIN.map(item => {
-          const exact = item.href === '/dashboard'
-          const active = exact ? pathname === item.href : pathname.startsWith(item.href)
-          return <NavItem key={item.href} {...item} active={active} onClick={() => setMobileOpen(false)} />
-        })}
+      <nav className="flex-1 px-3 py-3 overflow-y-auto space-y-4">
+        {NAV.map(section => (
+          <div key={section.group}>
+            <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-3 mb-1.5">{section.group}</div>
+            <div className="space-y-0.5">
+              {section.items.map(item => {
+                const exact = item.href === '/dashboard'
+                const active = exact ? pathname === item.href : pathname.startsWith(item.href)
+                return <NavItem key={item.href} {...item} active={active} onClick={() => setMobileOpen(false)} />
+              })}
+            </div>
+          </div>
+        ))}
 
-        <div className="pt-4 pb-1">
-          <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-3 mb-2">Ecossistema</div>
-          {NAV_ECO.map(eco => (
-            <a key={eco.href} href={eco.href} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-white hover:bg-white/8 transition-all">
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${eco.dot}`}/>
-              {eco.label}
-              <svg className="w-3 h-3 ml-auto text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-              </svg>
-            </a>
-          ))}
+        {/* Ecossistema */}
+        <div>
+          <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-3 mb-1.5">Ecossistema</div>
+          <div className="space-y-0.5">
+            {NAV_ECO.map(eco => (
+              <a key={eco.href} href={eco.href} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-slate-500 hover:text-white hover:bg-white/8 transition-all">
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${eco.dot}`}/>
+                {eco.label}
+                <svg className="w-3 h-3 ml-auto text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+              </a>
+            ))}
+          </div>
         </div>
       </nav>
 
@@ -149,7 +212,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="mx-3 mb-2 px-3 py-2.5 rounded-xl border border-white/8 bg-white/4 flex items-center gap-3">
           <div className="flex-1 min-w-0">
             <div className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Meu AgroRate</div>
-            <div className="font-black text-lg leading-none mt-0.5" style={{ color: SCORE_COLOR(score) }}>{score}</div>
+            <div className="font-black text-xl leading-none mt-0.5" style={{ color: SCORE_COLOR(score) }}>{score}</div>
           </div>
           <div className="text-xs font-bold px-2 py-0.5 rounded-lg" style={{ color: SCORE_COLOR(score), background: `${SCORE_COLOR(score)}20` }}>
             {SCORE_LABEL(score)}
@@ -159,15 +222,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* User */}
       <div className="px-3 py-3 border-t border-white/8 flex-shrink-0">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-colors">
+        <div className="flex items-center gap-3 px-2 py-2 rounded-xl">
           <div className="w-8 h-8 rounded-lg bg-[#065f46] flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
             {userInitial}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm text-white font-medium truncate">{userName}</div>
-            <button onClick={handleSignOut} className="text-xs text-slate-500 hover:text-red-400 transition-colors text-left">
-              Sair da conta
-            </button>
+            <button onClick={handleSignOut} className="text-xs text-slate-500 hover:text-red-400 transition-colors">Sair</button>
           </div>
         </div>
       </div>
@@ -195,17 +256,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <h1 className="font-bold text-slate-800 text-base">{pageTitle}</h1>
           <div className="ml-auto flex items-center gap-3">
             {scoreLoaded && score !== null && (
-              <div className="hidden sm:flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-xl border"
+              <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border"
                 style={{ color: SCORE_COLOR(score), background: `${SCORE_COLOR(score)}12`, borderColor: `${SCORE_COLOR(score)}30` }}>
                 <div className="w-1.5 h-1.5 rounded-full" style={{ background: SCORE_COLOR(score) }}/>
                 {score} · {SCORE_LABEL(score)}
               </div>
             )}
+            <Link href="/dashboard/alertas"
+              className="relative p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">3</span>
+            </Link>
             <Link href="/dashboard/credito"
               className="flex items-center gap-1.5 bg-[#065f46] text-white text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-[#047857] transition-colors">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <rect x="2" y="5" width="20" height="14" rx="3"/>
-                <path d="M2 10h20"/>
+                <rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/>
               </svg>
               Ver crédito
             </Link>

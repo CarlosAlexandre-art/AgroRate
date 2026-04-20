@@ -17,13 +17,22 @@ interface Offer {
   minScore?: number
 }
 
+// Dados baseados no Plano Safra 2025/26 — taxas anuais convertidas para mensais
+// Pronaf: 2-8% a.a. | Pronamp: 8-10% a.a. | Mercado: 12-18% a.a. (Selic 15%)
 const MOCK_OFFERS: Offer[] = [
-  { id: '1', partner: 'Sicredi', partnerType: 'Cooperativa', name: 'Crédito Rural Premium', amount: 200000, rate: 1.0, term: 12, requirements: ['Score AgroRate acima de 750', 'Propriedade documentada'], featured: true, minScore: 750 },
-  { id: '2', partner: 'Banco do Brasil', partnerType: 'Banco', name: 'Finagro Moderinfra', amount: 150000, rate: 1.2, term: 10, requirements: ['Score AgroRate acima de 600'], minScore: 600 },
-  { id: '3', partner: 'Sicoob', partnerType: 'Cooperativa', name: 'Crédito de Insumos', amount: 100000, rate: 1.4, term: 8, requirements: ['Score AgroRate acima de 600'], minScore: 600 },
-  { id: '4', partner: 'Bradesco', partnerType: 'Banco', name: 'Financiamento Agro', amount: 180000, rate: 1.5, term: 18, requirements: ['Score AgroRate acima de 500'], minScore: 500 },
-  { id: '5', partner: 'AgroCred', partnerType: 'Fintech', name: 'Antecipação de Recebíveis', amount: 50000, rate: 1.8, term: 3, requirements: ['Contratos firmados no AgroCore'], minScore: 300 },
-  { id: '6', partner: 'Santander', partnerType: 'Banco', name: 'Custeio Agrícola', amount: 80000, rate: 1.6, term: 6, requirements: ['Score acima de 450'], minScore: 450 },
+  { id: '1',  partner: 'BNB – Agroamigo',    partnerType: 'Banco',       name: 'Pronaf B – Microcrédito',        amount: 12000,    rate: 0.04, term: 24, requirements: ['CAF ativo', 'Renda até R$ 50 mil/ano'],                    minScore: 0 },
+  { id: '2',  partner: 'Banco do Brasil',     partnerType: 'Banco',       name: 'Pronaf Custeio – Alimentos',     amount: 250000,   rate: 0.25, term: 12, requirements: ['CAF ativo', 'Produção de alimentos básicos'],              minScore: 100 },
+  { id: '3',  partner: 'Sicoob',              partnerType: 'Cooperativa', name: 'Pronaf Mais Alimentos',          amount: 250000,   rate: 0.21, term: 36, requirements: ['CAF ativo', 'Score acima de 200'],                       minScore: 200 },
+  { id: '4',  partner: 'Cresol',              partnerType: 'Cooperativa', name: 'Pronaf Custeio – Orgânicos',     amount: 250000,   rate: 0.17, term: 12, requirements: ['CAF ativo', 'Certificação orgânica'],                    minScore: 200 },
+  { id: '5',  partner: 'Banco do Brasil',     partnerType: 'Banco',       name: 'Pronamp Custeio',                amount: 1500000,  rate: 0.69, term: 12, requirements: ['Score acima de 400', 'CCIR e ITR em dia'],               minScore: 400 },
+  { id: '6',  partner: 'Sicredi',             partnerType: 'Cooperativa', name: 'Pronamp Custeio',                amount: 1500000,  rate: 0.69, term: 12, requirements: ['Score acima de 450', 'Propriedade documentada'],        featured: true, minScore: 450 },
+  { id: '7',  partner: 'Sicredi',             partnerType: 'Cooperativa', name: 'Pronamp Investimento',           amount: 2000000,  rate: 0.64, term: 60, requirements: ['Score acima de 500', 'Projeto técnico'],                minScore: 500 },
+  { id: '8',  partner: 'Bradesco E-agro',     partnerType: 'Banco',       name: 'Custeio Geral – Empresarial',    amount: 3000000,  rate: 0.82, term: 12, requirements: ['Score acima de 550', 'CPR Digital'],                    minScore: 550 },
+  { id: '9',  partner: 'Banco do Brasil',     partnerType: 'Banco',       name: 'Moderinfra – Irrigação',         amount: 3000000,  rate: 0.80, term: 60, requirements: ['Score acima de 600', 'CAR ativo', 'Outorga de água'],   minScore: 600 },
+  { id: '10', partner: 'Banco do Brasil',     partnerType: 'Banco',       name: 'PCA – Armazéns (até 12 mil t)', amount: 5000000,  rate: 0.69, term: 84, requirements: ['Score acima de 650', 'Projeto técnico BNDES'],          minScore: 650 },
+  { id: '11', partner: 'Agrolend',            partnerType: 'Fintech',     name: 'CPR Digital – Custeio',          amount: 500000,   rate: 1.05, term: 6,  requirements: ['Contratos no AgroCore', 'Score acima de 300'],          minScore: 300 },
+  { id: '12', partner: 'TerraMagna',          partnerType: 'Fintech',     name: 'Financiamento Terra Garantida',  amount: 2000000,  rate: 0.95, term: 24, requirements: ['Imóvel como garantia', 'Score acima de 400'],           minScore: 400 },
+  { id: '13', partner: 'Santander',           partnerType: 'Banco',       name: 'Crédito Livre Agro (CPRF)',      amount: 10000000, rate: 1.10, term: 18, requirements: ['Score acima de 600', 'Faturamento comprovado'],         minScore: 600 },
 ]
 
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)
@@ -118,9 +127,9 @@ export default function CreditoPage() {
           </div>
           <div className="w-px h-16 bg-slate-200 hidden md:block" />
           <div className="text-center flex-shrink-0">
-            <div className="text-xs text-slate-500 mb-1">Melhor taxa disponível</div>
-            <div className="text-2xl font-black text-[#065f46]">1,0% a.m.</div>
-            <div className="text-xs text-slate-400">Sicredi</div>
+            <div className="text-xs text-slate-500 mb-1">Melhor taxa — Pronaf</div>
+            <div className="text-2xl font-black text-[#065f46]">0,04% a.m.</div>
+            <div className="text-xs text-slate-400">2% a.a. · BNB Agroamigo</div>
           </div>
         </div>
       </div>
