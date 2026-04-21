@@ -42,8 +42,16 @@ const calcParcela = (p: number, r: number, n: number) => {
   return (p * rate * Math.pow(1 + rate, n)) / (Math.pow(1 + rate, n) - 1)
 }
 
+type QuodInfo = { score: number; faixa: string; capacidade: string; cpfMasked: string }
+
 export default function CreditoPage() {
   const [score, setScore] = useState<number | null>(null)
+  const [quod, setQuod] = useState<QuodInfo | null>(null)
+  const [quodVerifiedAt, setQuodVerifiedAt] = useState<string | null>(null)
+  const [cpf, setCpf] = useState('')
+  const [cpfConsent, setCpfConsent] = useState(false)
+  const [quodLoading, setQuodLoading] = useState(false)
+  const [quodError, setQuodError] = useState('')
   const [amount, setAmount] = useState(100000)
   const [selected, setSelected] = useState<Offer | null>(null)
   const [modal, setModal] = useState(false)
@@ -57,10 +65,47 @@ export default function CreditoPage() {
       if (!session?.user) return
       const res = await fetch(`/api/agrorate/score?userId=${session.user.id}`)
       const json = await res.json()
-      if (res.ok) setScore(json.score)
+      if (res.ok) {
+        setScore(json.score)
+        if (json.quodVerifiedAt) {
+          setQuodVerifiedAt(json.quodVerifiedAt)
+          setQuod({ score: json.quodScore, faixa: json.quodFaixa, capacidade: json.quodCapacidade, cpfMasked: '' })
+        }
+      }
     }
     loadScore()
   }, [])
+
+  function formatCpf(value: string) {
+    const d = value.replace(/\D/g, '').slice(0, 11)
+    if (d.length <= 3) return d
+    if (d.length <= 6) return `${d.slice(0,3)}.${d.slice(3)}`
+    if (d.length <= 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`
+    return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`
+  }
+
+  async function handleVerificarCpf() {
+    const digits = cpf.replace(/\D/g, '')
+    if (digits.length !== 11) { setQuodError('CPF inválido. Digite 11 dígitos.'); return }
+    if (!cpfConsent) { setQuodError('Autorize a consulta antes de continuar.'); return }
+    setQuodLoading(true); setQuodError('')
+    try {
+      const res = await fetch('/api/quod/verificar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cpf: digits }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setQuodError(data.error || 'Erro na verificação'); return }
+      setQuod(data)
+      setQuodVerifiedAt(new Date().toISOString())
+      setCpf('')
+    } catch {
+      setQuodError('Erro de conexão. Tente novamente.')
+    } finally {
+      setQuodLoading(false)
+    }
+  }
 
   const eligible = MOCK_OFFERS.filter(o => {
     const scoreOk = score === null || (o.minScore ?? 0) <= score
@@ -98,6 +143,88 @@ export default function CreditoPage() {
           ✅ Solicitação enviada! Nossa equipe entrará em contato em até 24h.
         </div>
       )}
+
+      {/* Verificação QUOD */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Verificação de crédito</div>
+          {quodVerifiedAt && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+              Verificado bureau
+            </div>
+          )}
+        </div>
+        <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+          Vincule seu CPF para enriquecer seu score: 70% dados da fazenda + 30% perfil de crédito externo.
+        </p>
+
+        {quodVerifiedAt && quod ? (
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-emerald-50 rounded-xl p-3 text-center">
+              <div className="text-xs text-slate-500 mb-0.5">Score bureau</div>
+              <div className="font-black text-emerald-700 text-lg">{quod.score}</div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 text-center">
+              <div className="text-xs text-slate-500 mb-0.5">Faixa</div>
+              <div className="font-bold text-slate-700 text-xs leading-tight mt-1">{quod.faixa || '—'}</div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 text-center">
+              <div className="text-xs text-slate-500 mb-0.5">Score híbrido</div>
+              <div className="font-black text-[#065f46] text-lg">{score}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {quodError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{quodError}</div>
+            )}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">CPF do titular</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={cpf}
+                onChange={e => setCpf(formatCpf(e.target.value))}
+                placeholder="000.000.000-00"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#065f46]/30 focus:border-[#065f46]"
+              />
+            </div>
+            <div
+              className="flex items-start gap-3 p-3 rounded-xl bg-blue-50 border border-blue-100 cursor-pointer"
+              onClick={() => setCpfConsent(c => !c)}
+            >
+              <div className={`w-4 h-4 rounded flex-shrink-0 mt-0.5 border-2 flex items-center justify-center transition-colors ${cpfConsent ? 'bg-[#065f46] border-[#065f46]' : 'border-slate-300 bg-white'}`}>
+                {cpfConsent && (
+                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                  </svg>
+                )}
+              </div>
+              <p className="text-xs text-blue-700 leading-relaxed">
+                <strong>Autorizo</strong> o AgroRate a consultar meu perfil de crédito junto ao bureau parceiro, conforme a <strong>LGPD</strong>. CPF armazenado criptografado, nunca compartilhado com terceiros.
+              </p>
+            </div>
+            <button
+              onClick={handleVerificarCpf}
+              disabled={quodLoading || !cpfConsent || cpf.replace(/\D/g,'').length !== 11}
+              className="w-full py-2.5 rounded-xl bg-[#065f46] text-white text-sm font-semibold hover:bg-[#047857] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {quodLoading ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                  Verificando...
+                </>
+              ) : 'Verificar CPF e enriquecer score'}
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Simulador */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
