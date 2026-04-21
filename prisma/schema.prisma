@@ -150,6 +150,7 @@ model Goal {
   propertyId   String
   property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   title        String
+  description  String?  // AgroOS — não remover
   type         String   @default("REVENUE")
   targetValue  Decimal
   currentValue Decimal  @default(0)
