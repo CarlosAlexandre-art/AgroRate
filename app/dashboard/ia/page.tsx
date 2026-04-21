@@ -59,9 +59,14 @@ export default function IAPage() {
       })
       const json = await res.json()
       const aiTs = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-      setMsgs(m => [...m, { role: 'ai', text: json.resposta || 'Desculpe, não consegui processar sua pergunta.', ts: aiTs }])
+      if (!res.ok || !json.resposta) {
+        setMsgs(m => [...m, { role: 'ai', text: 'Não consegui gerar uma resposta agora. Tente novamente em instantes.', ts: aiTs }])
+      } else {
+        setMsgs(m => [...m, { role: 'ai', text: json.resposta, ts: aiTs }])
+      }
     } catch {
-      setMsgs(m => [...m, { role: 'ai', text: 'Erro de conexão. Tente novamente em instantes.', ts: '' }])
+      const aiTs = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      setMsgs(m => [...m, { role: 'ai', text: 'Erro de conexão. Verifique sua internet e tente novamente.', ts: aiTs }])
     }
     setLoading(false)
   }

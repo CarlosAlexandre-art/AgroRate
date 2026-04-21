@@ -5,23 +5,28 @@ export async function POST(request: NextRequest) {
   try {
     const { score, category, productionScore, efficiencyScore, behaviorScore, operationalScore, totalRevenue, marginRate, question } = await request.json()
 
+    const temScore = score != null && !isNaN(Number(score))
+    const contexto = temScore
+      ? `Dados do produtor:
+- AgroRate Score: ${score} (categoria: ${category})
+- Produção: ${productionScore}/1000 | Eficiência: ${efficiencyScore}/1000
+- Comportamento: ${behaviorScore}/1000 | Operacional: ${operationalScore}/1000
+- Receita: R$ ${Number(totalRevenue || 0).toLocaleString('pt-BR')} | Margem: ${Math.round(Number(marginRate || 0) * 100)}%`
+      : 'O produtor ainda não tem dados de produção cadastrados.'
+
     const resposta = await groq([
       {
         role: 'system',
-        content: `Você é um especialista em crédito rural e analista financeiro do agro.
-Analise o perfil do produtor e responda de forma direta, prática e em português.
-Seja específico sobre o que o produtor pode fazer para melhorar seu acesso a crédito.
-Máximo 3 parágrafos curtos.`,
+        content: `Você é o Conselheiro AgroRate, assistente do sistema AgroRate de avaliação de produtores rurais brasileiros.
+Seu papel é ajudar produtores rurais a entender seu perfil no sistema, interpretar métricas e sugerir melhorias na operação.
+Responda sempre em português, de forma direta e prática, com no máximo 3 parágrafos curtos.
+Não recuse perguntas sobre o sistema AgroRate — seu objetivo é ajudar o produtor a usar a plataforma.`,
       },
       {
         role: 'user',
-        content: `Score AgroRate: ${score} (${category})
-Produção: ${productionScore}/1000 | Eficiência: ${efficiencyScore}/1000
-Comportamento: ${behaviorScore}/1000 | Operacional: ${operationalScore}/1000
-Receita total: R$ ${Number(totalRevenue).toLocaleString('pt-BR')}
-Margem: ${Math.round(Number(marginRate) * 100)}%
+        content: `${contexto}
 
-Pergunta: ${question || 'Como posso melhorar meu score e qual crédito está disponível para mim agora?'}`,
+Pergunta do produtor: ${question || 'Como posso melhorar meu score no AgroRate?'}`,
       },
     ], 512)
 
