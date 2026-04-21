@@ -64,6 +64,7 @@ model Property {
   revenues       Revenue[]
   teamMembers    TeamMember[]
   goals          Goal[]
+  alerts         Alert[]
   agroRate       AgroRate?
   creditRequests CreditRequest[]
   commissions    Commission[]
@@ -278,6 +279,18 @@ model Commission {
   notes           String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+}
+
+// ─── Modelo compartilhado com AgroOS — não remover ───────────────────────────
+
+model Alert {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  message    String
+  type       String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
 }
 
 // ─── Log de webhooks n8n ──────────────────────────────────────────────────────
