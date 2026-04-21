@@ -11,6 +11,7 @@ type ScoreData = {
   totalRevenue: number; totalCosts: number
   marginRate: number; activityCount: number
   dataCompleteness: number; lastCalculated: string
+  quodScore?: number; quodFaixa?: string; quodVerifiedAt?: string
 }
 
 const CAT: Record<string, { label: string; color: string; bg: string; border: string; desc: string; hex: string }> = {
@@ -206,6 +207,14 @@ export default function DashboardPage() {
             {cat.label}
           </div>
           <p className="text-xs text-slate-400 text-center mt-2 leading-snug">{cat.desc}</p>
+          {data.quodVerifiedAt && (
+            <div className="mt-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+              Verificado bureau · {data.quodScore}
+            </div>
+          )}
         </div>
 
         {/* Composição */}

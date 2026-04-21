@@ -40,6 +40,9 @@ model User {
   stripeCustomerId String?
   avatarUrl        String?
   phone            String?
+  cpfEncrypted     String?
+  cpfHash          String?   @unique
+  cpfMasked        String?
   properties       Property[]
   createdAt        DateTime  @default(now())
 }
@@ -172,6 +175,11 @@ model AgroRate {
   trendHistory      Json?         @default("[]")
   lastCalculated    DateTime      @default(now())
   nextUpdate        DateTime?
+  // QUOD / Direct Data
+  quodScore         Int?
+  quodFaixa         String?
+  quodCapacidade    String?
+  quodVerifiedAt    DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 }

@@ -145,7 +145,14 @@ export async function GET(request: NextRequest) {
       agrocoreData = await getAgrocoreData(supabaseIdForBonus)
       if (agrocoreData) agrocoreBonus = calcAgrocoreBonus(agrocoreData)
     }
-    const finalScore = Math.min(1000, totalScore + agrocoreBonus)
+
+    // Integração QUOD: se CPF verificado, score híbrido (70% interno + 30% QUOD)
+    const agroRateExistente = await prisma.agroRate.findUnique({ where: { propertyId: targetPropertyId! } })
+    const quodScore = agroRateExistente?.quodScore ?? null
+    const scoreComBonus = Math.min(1000, totalScore + agrocoreBonus)
+    const finalScore = quodScore !== null
+      ? Math.min(1000, Math.round(scoreComBonus * 0.70 + quodScore * 0.30))
+      : scoreComBonus
 
     const agroRate = await prisma.agroRate.upsert({
       where: { propertyId: targetPropertyId! },
