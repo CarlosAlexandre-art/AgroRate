@@ -60,7 +60,8 @@ export default function IAPage() {
       const json = await res.json()
       const aiTs = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
       if (!res.ok || !json.resposta) {
-        setMsgs(m => [...m, { role: 'ai', text: 'Não consegui gerar uma resposta agora. Tente novamente em instantes.', ts: aiTs }])
+        const detalhe = json.error ? ` (${json.error})` : ''
+        setMsgs(m => [...m, { role: 'ai', text: `Erro ao conectar com a IA${detalhe}. Tente novamente.`, ts: aiTs }])
       } else {
         setMsgs(m => [...m, { role: 'ai', text: json.resposta, ts: aiTs }])
       }

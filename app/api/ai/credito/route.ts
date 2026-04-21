@@ -32,7 +32,8 @@ Pergunta do produtor: ${question || 'Como posso melhorar meu score no AgroRate?'
 
     return NextResponse.json({ resposta })
   } catch (error) {
-    console.error('AI crédito erro:', error)
-    return NextResponse.json({ error: 'Erro ao gerar análise' }, { status: 500 })
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error('AI crédito erro:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
