@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Corpo -->
+  <rect x="13" y="26" width="38" height="30" rx="10" fill="#065f46"/>
+  <!-- Cabeça -->
+  <rect x="15" y="8" width="34" height="24" rx="9" fill="#065f46"/>
+  <!-- Brilho na cabeça -->
+  <rect x="15" y="8" width="34" height="12" rx="9" fill="rgba(255,255,255,0.08)"/>
+  <!-- Antena -->
+  <line x1="32" y1="8" x2="32" y2="2" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="32" cy="2" r="2" fill="#6ee7b7"/>
+  <!-- Olhos -->
+  <circle cx="23" cy="18" r="4" fill="#10b981"/>
+  <circle cx="41" cy="18" r="4" fill="#10b981"/>
+  <circle cx="24" cy="17" r="1.5" fill="white"/>
+  <circle cx="42" cy="17" r="1.5" fill="white"/>
+  <!-- Boca -->
+  <path d="M25 27 Q32 31 39 27" stroke="#6ee7b7" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <!-- Gauge no peito -->
+  <rect x="19" y="32" width="26" height="17" rx="4" fill="rgba(0,0,0,0.3)"/>
+  <path d="M24 45 A8 8 0 0 1 40 45" stroke="rgba(255,255,255,0.25)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M24 45 A8 8 0 0 1 32 37" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <circle cx="32" cy="45" r="1.5" fill="white"/>
+  <line x1="32" y1="45" x2="37" y2="38" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Braços -->
+  <rect x="3" y="30" width="10" height="7" rx="3.5" fill="#065f46" stroke="#10b981" stroke-width="1.2"/>
+  <rect x="51" y="30" width="10" height="7" rx="3.5" fill="#065f46" stroke="#10b981" stroke-width="1.2"/>
+  <!-- Pernas -->
+  <rect x="17" y="54" width="11" height="8" rx="3" fill="#047857"/>
+  <rect x="36" y="54" width="11" height="8" rx="3" fill="#047857"/>
+</svg>

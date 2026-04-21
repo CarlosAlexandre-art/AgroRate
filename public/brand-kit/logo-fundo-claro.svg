@@ -1,0 +1,14 @@
+<svg width="200" height="64" viewBox="0 0 200 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="64" rx="12" fill="#f0fdf4"/>
+  <!-- Mark -->
+  <rect width="40" height="40" x="8" y="12" rx="10" fill="#065f46"/>
+  <path d="M17 36 A11 11 0 0 1 39 36" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-opacity="0.35" fill="none"/>
+  <path d="M17 36 A11 11 0 0 1 36 25" stroke="white" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <circle cx="28" cy="36" r="2.4" fill="white"/>
+  <line x1="28" y1="36" x2="34" y2="26" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M18 41 C18 41 21 36 24 35" stroke="#6ee7b7" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+  <path d="M18 41 C20 39 23 37 24 35" stroke="#6ee7b7" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+  <!-- Wordmark -->
+  <text x="58" y="30" font-family="Montserrat, sans-serif" font-weight="800" font-size="18" fill="#065f46" letter-spacing="-0.3">AgroRate</text>
+  <text x="58" y="46" font-family="Montserrat, sans-serif" font-weight="500" font-size="10" fill="#059669" letter-spacing="0.2">Score de Crédito Rural</text>
+</svg>

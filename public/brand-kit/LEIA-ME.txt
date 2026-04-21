@@ -1,0 +1,36 @@
+AgroRate — Brand Kit
+====================
+
+Cores oficiais
+--------------
+Primária:    #065f46  (verde-escuro — fundo do logo, botões CTA)
+Secundária:  #059669  (verde médio — hovers, destaques)
+Destaque:    #34d399  (verde-claro — folha do logo, acentos)
+Texto:       #0f172a  (quase-preto)
+Background:  #f0fdf4  (verde suave)
+
+Tipografia
+----------
+Família: Montserrat (Google Fonts)
+Logo / Títulos:   ExtraBold 800
+Subtítulos:       SemiBold 600
+Corpo:            Regular 400
+
+Arquivos nesta pasta
+--------------------
+logo-transparente.svg        — Logo completo, fundo transparente
+logo-fundo-claro.svg         — Logo sobre fundo verde claro
+logo-fundo-escuro.svg        — Logo sobre fundo escuro/navy
+logotipo-horizontal.svg      — Versão horizontal completa
+logotipo-horizontal-negativo.svg — Versão negativa (sobre verde)
+logo-marca-dagua.svg         — Marca d'água para documentos
+paleta-cores.svg             — Swatches das cores oficiais
+tipografia.svg               — Exemplo de tipografia
+LEIA-ME.txt                  — Este arquivo
+
+Uso correto
+-----------
+- Use sempre a versão de maior contraste para cada fundo
+- Não distorça, rotacione ou recolora o logo
+- Espaço mínimo ao redor: 1x a altura do ícone
+- Em fundos coloridos, use a versão negativa (branca)

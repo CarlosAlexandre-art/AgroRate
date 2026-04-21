@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="110" fill="#065f46"/>
+  <!-- Gauge track -->
+  <path d="M100 330 A176 176 0 0 1 412 330" stroke="rgba(255,255,255,0.2)" stroke-width="32" stroke-linecap="round" fill="none"/>
+  <!-- Gauge filled dark -->
+  <path d="M100 330 A176 176 0 0 1 256 154" stroke="white" stroke-width="32" stroke-linecap="round" fill="none"/>
+  <!-- Gauge filled light -->
+  <path d="M256 154 A176 176 0 0 1 412 330" stroke="#6ee7b7" stroke-width="32" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <!-- Center dot -->
+  <circle cx="256" cy="330" r="24" fill="white"/>
+  <!-- Needle -->
+  <line x1="256" y1="330" x2="374" y2="166" stroke="white" stroke-width="18" stroke-linecap="round"/>
+  <!-- Leaf -->
+  <path d="M136 406 C136 406 170 354 208 330" stroke="#6ee7b7" stroke-width="14" stroke-linecap="round" fill="none"/>
+  <path d="M136 406 C162 378 186 356 208 330" stroke="#6ee7b7" stroke-width="14" stroke-linecap="round" fill="none"/>
+</svg>
