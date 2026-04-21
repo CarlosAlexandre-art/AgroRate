@@ -49,10 +49,11 @@ model User {
   cpfEncrypted     String?
   cpfHash          String?   @unique
   cpfMasked        String?
-  cnpjEncrypted    String?
-  cnpjHash         String?   @unique
-  cnpjMasked       String?
-  properties       Property[]
+  cnpjEncrypted     String?
+  cnpjHash          String?   @unique
+  cnpjMasked        String?
+  pushSubscriptions PushSubscription[] // AgroOS — não remover
+  properties        Property[]
   createdAt        DateTime  @default(now())
 }
 
@@ -92,6 +93,8 @@ model Field {
   id           String     @id @default(uuid())
   propertyId   String
   property     Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  cropId       String?    // AgroOS — não remover
+  crop         Crop?      @relation(fields: [cropId], references: [id])
   name         String
   sizeHectares Decimal    @default(0)
   activities   Activity[]
@@ -290,7 +293,24 @@ model Commission {
   updatedAt       DateTime         @updatedAt
 }
 
-// ─── Modelo compartilhado com AgroOS — não remover ───────────────────────────
+// ─── Modelos compartilhados com AgroOS — não remover ─────────────────────────
+
+model Crop {
+  id     String  @id @default(uuid())
+  name   String
+  season String?
+  fields Field[]
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+}
 
 model Alert {
   id         String   @id @default(uuid())
