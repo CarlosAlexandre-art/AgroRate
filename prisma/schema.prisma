@@ -22,6 +22,12 @@ enum ActivityStatus {
   CANCELLED
 }
 
+// enum compartilhado com AgroOS — não remover
+enum ExecutorType {
+  INTERNAL
+  AGROLINK
+}
+
 enum CostCategory {
   INSUMO
   MAO_DE_OBRA
@@ -99,11 +105,14 @@ model Activity {
   field        Field?         @relation(fields: [fieldId], references: [id])
   assignedToId String?
   assignedTo   TeamMember?    @relation(fields: [assignedToId], references: [id])
-  type         String
-  description  String?
-  status       ActivityStatus @default(PENDING)
-  startDate    DateTime
-  endDate      DateTime?
+  type              String
+  description       String?
+  status            ActivityStatus @default(PENDING)
+  executor          ExecutorType?  // campo AgroOS — não remover
+  agrolinkServiceId String?
+  agrolinkStatus    String?
+  startDate         DateTime
+  endDate           DateTime?
   costs        Cost[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
