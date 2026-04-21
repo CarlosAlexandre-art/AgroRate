@@ -42,14 +42,17 @@ const calcParcela = (p: number, r: number, n: number) => {
   return (p * rate * Math.pow(1 + rate, n)) / (Math.pow(1 + rate, n) - 1)
 }
 
-type QuodInfo = { score: number; faixa: string; capacidade: string; cpfMasked: string }
+type QuodInfo = { score: number; faixa: string; capacidade: string; tipo: string; docMasked: string }
 
 export default function CreditoPage() {
   const [score, setScore] = useState<number | null>(null)
   const [quod, setQuod] = useState<QuodInfo | null>(null)
   const [quodVerifiedAt, setQuodVerifiedAt] = useState<string | null>(null)
+  const [quodTipo, setQuodTipo] = useState<string | null>(null)
+  const [docTab, setDocTab] = useState<'PF' | 'PJ'>('PF')
   const [cpf, setCpf] = useState('')
-  const [cpfConsent, setCpfConsent] = useState(false)
+  const [cnpj, setCnpj] = useState('')
+  const [docConsent, setDocConsent] = useState(false)
   const [quodLoading, setQuodLoading] = useState(false)
   const [quodError, setQuodError] = useState('')
   const [amount, setAmount] = useState(100000)
@@ -69,7 +72,8 @@ export default function CreditoPage() {
         setScore(json.score)
         if (json.quodVerifiedAt) {
           setQuodVerifiedAt(json.quodVerifiedAt)
-          setQuod({ score: json.quodScore, faixa: json.quodFaixa, capacidade: json.quodCapacidade, cpfMasked: '' })
+          setQuodTipo(json.quodTipo || 'PF')
+          setQuod({ score: json.quodScore, faixa: json.quodFaixa, capacidade: json.quodCapacidade, tipo: json.quodTipo || 'PF', docMasked: '' })
         }
       }
     }
@@ -84,22 +88,37 @@ export default function CreditoPage() {
     return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`
   }
 
-  async function handleVerificarCpf() {
-    const digits = cpf.replace(/\D/g, '')
-    if (digits.length !== 11) { setQuodError('CPF inválido. Digite 11 dígitos.'); return }
-    if (!cpfConsent) { setQuodError('Autorize a consulta antes de continuar.'); return }
+  function formatCnpj(value: string) {
+    const d = value.replace(/\D/g, '').slice(0, 14)
+    if (d.length <= 2) return d
+    if (d.length <= 5) return `${d.slice(0,2)}.${d.slice(2)}`
+    if (d.length <= 8) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5)}`
+    if (d.length <= 12) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8)}`
+    return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12)}`
+  }
+
+  async function handleVerificar() {
+    if (!docConsent) { setQuodError('Autorize a consulta antes de continuar.'); return }
+    const cpfDigits  = cpf.replace(/\D/g, '')
+    const cnpjDigits = cnpj.replace(/\D/g, '')
+    if (docTab === 'PF' && cpfDigits.length !== 11)  { setQuodError('CPF inválido. Digite 11 dígitos.'); return }
+    if (docTab === 'PJ' && cnpjDigits.length !== 14) { setQuodError('CNPJ inválido. Digite 14 dígitos.'); return }
     setQuodLoading(true); setQuodError('')
     try {
+      const body = docTab === 'PJ'
+        ? { cpf: cpfDigits, cnpj: cnpjDigits }
+        : { cpf: cpfDigits }
       const res = await fetch('/api/quod/verificar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cpf: digits }),
+        body: JSON.stringify(body),
       })
       const data = await res.json()
       if (!res.ok) { setQuodError(data.error || 'Erro na verificação'); return }
       setQuod(data)
+      setQuodTipo(data.tipo)
       setQuodVerifiedAt(new Date().toISOString())
-      setCpf('')
+      setCpf(''); setCnpj('')
     } catch {
       setQuodError('Erro de conexão. Tente novamente.')
     } finally {
@@ -153,12 +172,12 @@ export default function CreditoPage() {
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
               </svg>
-              Verificado bureau
+              Verificado · {quodTipo}
             </div>
           )}
         </div>
         <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-          Vincule seu CPF para enriquecer seu score: 70% dados da fazenda + 30% perfil de crédito externo.
+          Vincule seu documento para enriquecer seu score: 70% dados da fazenda + 30% perfil de crédito externo.
         </p>
 
         {quodVerifiedAt && quod ? (
@@ -178,40 +197,61 @@ export default function CreditoPage() {
           </div>
         ) : (
           <div className="space-y-3">
+            {/* Abas PF / PJ */}
+            <div className="flex gap-1 p-1 bg-slate-100 rounded-xl">
+              {(['PF', 'PJ'] as const).map(tab => (
+                <button key={tab} onClick={() => { setDocTab(tab); setQuodError('') }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${docTab === tab ? 'bg-white text-[#065f46] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                  {tab === 'PF' ? 'Pessoa Física (CPF)' : 'Pessoa Jurídica (CNPJ)'}
+                </button>
+              ))}
+            </div>
+
             {quodError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{quodError}</div>
             )}
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">CPF do titular</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={cpf}
-                onChange={e => setCpf(formatCpf(e.target.value))}
-                placeholder="000.000.000-00"
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#065f46]/30 focus:border-[#065f46]"
-              />
-            </div>
-            <div
-              className="flex items-start gap-3 p-3 rounded-xl bg-blue-50 border border-blue-100 cursor-pointer"
-              onClick={() => setCpfConsent(c => !c)}
-            >
-              <div className={`w-4 h-4 rounded flex-shrink-0 mt-0.5 border-2 flex items-center justify-center transition-colors ${cpfConsent ? 'bg-[#065f46] border-[#065f46]' : 'border-slate-300 bg-white'}`}>
-                {cpfConsent && (
+
+            {docTab === 'PF' ? (
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">CPF do titular</label>
+                <input type="text" inputMode="numeric" value={cpf}
+                  onChange={e => setCpf(formatCpf(e.target.value))} placeholder="000.000.000-00"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#065f46]/30 focus:border-[#065f46]"/>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">CPF do sócio/responsável</label>
+                  <input type="text" inputMode="numeric" value={cpf}
+                    onChange={e => setCpf(formatCpf(e.target.value))} placeholder="000.000.000-00"
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#065f46]/30 focus:border-[#065f46]"/>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">CNPJ da empresa</label>
+                  <input type="text" inputMode="numeric" value={cnpj}
+                    onChange={e => setCnpj(formatCnpj(e.target.value))} placeholder="00.000.000/0000-00"
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#065f46]/30 focus:border-[#065f46]"/>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-50 border border-blue-100 cursor-pointer"
+              onClick={() => setDocConsent(c => !c)}>
+              <div className={`w-4 h-4 rounded flex-shrink-0 mt-0.5 border-2 flex items-center justify-center transition-colors ${docConsent ? 'bg-[#065f46] border-[#065f46]' : 'border-slate-300 bg-white'}`}>
+                {docConsent && (
                   <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
                   </svg>
                 )}
               </div>
               <p className="text-xs text-blue-700 leading-relaxed">
-                <strong>Autorizo</strong> o AgroRate a consultar meu perfil de crédito junto ao bureau parceiro, conforme a <strong>LGPD</strong>. CPF armazenado criptografado, nunca compartilhado com terceiros.
+                <strong>Autorizo</strong> o AgroRate a consultar meu perfil de crédito junto ao bureau parceiro, conforme a <strong>LGPD</strong>. Dados armazenados criptografados, nunca compartilhados com terceiros.
               </p>
             </div>
-            <button
-              onClick={handleVerificarCpf}
-              disabled={quodLoading || !cpfConsent || cpf.replace(/\D/g,'').length !== 11}
-              className="w-full py-2.5 rounded-xl bg-[#065f46] text-white text-sm font-semibold hover:bg-[#047857] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
+
+            <button onClick={handleVerificar}
+              disabled={quodLoading || !docConsent || (docTab === 'PF' ? cpf.replace(/\D/g,'').length !== 11 : cnpj.replace(/\D/g,'').length !== 14)}
+              className="w-full py-2.5 rounded-xl bg-[#065f46] text-white text-sm font-semibold hover:bg-[#047857] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
               {quodLoading ? (
                 <>
                   <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -220,7 +260,7 @@ export default function CreditoPage() {
                   </svg>
                   Verificando...
                 </>
-              ) : 'Verificar CPF e enriquecer score'}
+              ) : `Verificar ${docTab === 'PF' ? 'CPF' : 'CNPJ'} e enriquecer score`}
             </button>
           </div>
         )}

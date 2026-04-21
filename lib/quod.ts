@@ -10,11 +10,13 @@ export type QuodResult = {
   faixaScore: string
   capacidadePagamento: string
   perfil: string
+  tipo: 'PF' | 'PJ'
 }
 
-export async function consultarQuod(cpf: string): Promise<QuodResult> {
+export async function consultarQuod(cpf: string, cnpj?: string): Promise<QuodResult> {
   const cpfLimpo = cpf.replace(/\D/g, '')
-  const url = `${DIRECT_DATA_URL}?CPF=${cpfLimpo}&CNPJ=&Token=${TOKEN}`
+  const cnpjLimpo = cnpj ? cnpj.replace(/\D/g, '') : ''
+  const url = `${DIRECT_DATA_URL}?CPF=${cpfLimpo}&CNPJ=${cnpjLimpo}&Token=${TOKEN}`
 
   const res = await fetch(url)
   if (!res.ok) {
@@ -23,7 +25,21 @@ export async function consultarQuod(cpf: string): Promise<QuodResult> {
   }
 
   const data = await res.json()
+
+  // Pessoa Jurídica tem prioridade se CNPJ foi informado e retornou dados PJ
+  const pj = cnpjLimpo ? data?.retorno?.pessoaJuridica : null
   const pf = data?.retorno?.pessoaFisica
+
+  if (pj) {
+    return {
+      score: Number(pj.score) || 0,
+      faixaScore: pj.faixaScore || '',
+      capacidadePagamento: pj.capacidadePagamento || '',
+      perfil: pj.perfil || '',
+      tipo: 'PJ',
+    }
+  }
+
   if (!pf) throw new Error('Resposta inválida da DirectData')
 
   return {
@@ -31,6 +47,7 @@ export async function consultarQuod(cpf: string): Promise<QuodResult> {
     faixaScore: pf.faixaScore || '',
     capacidadePagamento: pf.capacidadePagamento || '',
     perfil: pf.perfil || '',
+    tipo: 'PF',
   }
 }
 
