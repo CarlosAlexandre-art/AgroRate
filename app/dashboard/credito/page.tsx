@@ -49,6 +49,7 @@ export default function CreditoPage() {
   const [quod, setQuod] = useState<QuodInfo | null>(null)
   const [quodVerifiedAt, setQuodVerifiedAt] = useState<string | null>(null)
   const [quodTipo, setQuodTipo] = useState<string | null>(null)
+  const [scoreAntes, setScoreAntes] = useState<number | null>(null)
   const [docTab, setDocTab] = useState<'PF' | 'PJ'>('PF')
   const [cpf, setCpf] = useState('')
   const [cnpj, setCnpj] = useState('')
@@ -105,9 +106,7 @@ export default function CreditoPage() {
     if (docTab === 'PJ' && cnpjDigits.length !== 14) { setQuodError('CNPJ inválido. Digite 14 dígitos.'); return }
     setQuodLoading(true); setQuodError('')
     try {
-      const body = docTab === 'PJ'
-        ? { cpf: cpfDigits, cnpj: cnpjDigits }
-        : { cpf: cpfDigits }
+      const body = docTab === 'PJ' ? { cpf: cpfDigits, cnpj: cnpjDigits } : { cpf: cpfDigits }
       const res = await fetch('/api/quod/verificar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -119,6 +118,16 @@ export default function CreditoPage() {
       setQuodTipo(data.tipo)
       setQuodVerifiedAt(new Date().toISOString())
       setCpf(''); setCnpj('')
+
+      // Recalcula score híbrido imediatamente
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        setScoreAntes(score)
+        const scoreRes = await fetch(`/api/agrorate/score?userId=${session.user.id}`)
+        const scoreJson = await scoreRes.json()
+        if (scoreRes.ok) setScore(scoreJson.score)
+      }
     } catch {
       setQuodError('Erro de conexão. Tente novamente.')
     } finally {
@@ -181,18 +190,31 @@ export default function CreditoPage() {
         </p>
 
         {quodVerifiedAt && quod ? (
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-emerald-50 rounded-xl p-3 text-center">
-              <div className="text-xs text-slate-500 mb-0.5">Score bureau</div>
-              <div className="font-black text-emerald-700 text-lg">{quod.score}</div>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-3 text-center">
-              <div className="text-xs text-slate-500 mb-0.5">Faixa</div>
-              <div className="font-bold text-slate-700 text-xs leading-tight mt-1">{quod.faixa || '—'}</div>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-3 text-center">
-              <div className="text-xs text-slate-500 mb-0.5">Score híbrido</div>
-              <div className="font-black text-[#065f46] text-lg">{score}</div>
+          <div className="space-y-3">
+            {scoreAntes !== null && score !== null && score > scoreAntes && (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">
+                <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center flex-shrink-0 text-white font-black text-sm">
+                  +{score - scoreAntes}
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-emerald-800">Score atualizado!</div>
+                  <div className="text-xs text-emerald-600">{scoreAntes} → {score} pts com verificação {quodTipo}</div>
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-emerald-50 rounded-xl p-3 text-center">
+                <div className="text-xs text-slate-500 mb-0.5">Score bureau</div>
+                <div className="font-black text-emerald-700 text-lg">{quod.score}</div>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 text-center">
+                <div className="text-xs text-slate-500 mb-0.5">Faixa</div>
+                <div className="font-bold text-slate-700 text-xs leading-tight mt-1">{quod.faixa || '—'}</div>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 text-center">
+                <div className="text-xs text-slate-500 mb-0.5">Score híbrido</div>
+                <div className="font-black text-[#065f46] text-lg">{score}</div>
+              </div>
             </div>
           </div>
         ) : (
