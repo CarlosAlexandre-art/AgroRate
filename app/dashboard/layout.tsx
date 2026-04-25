@@ -98,7 +98,7 @@ const NAV: { group: string; items: { href: string; label: string; icon: React.Re
 ]
 
 const NAV_ECO = [
-  { href: 'https://agrolink-opal.vercel.app', label: 'AgroCore', dot: 'bg-amber-400' },
+  { href: 'https://agrolink-opal.vercel.app', label: 'AgroCore', dot: 'bg-[#679d3f]' },
   { href: 'https://agros-os.vercel.app', label: 'AgroOS', dot: 'bg-emerald-400' },
 ]
 

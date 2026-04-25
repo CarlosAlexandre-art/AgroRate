@@ -46,6 +46,10 @@ type QuodInfo = { score: number; faixa: string; capacidade: string; tipo: string
 
 export default function CreditoPage() {
   const [score, setScore] = useState<number | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [propertyName, setPropertyName] = useState<string>('')
+  const [totalRevenue, setTotalRevenue] = useState<number>(0)
+  const [activityCount, setActivityCount] = useState<number>(0)
   const [quod, setQuod] = useState<QuodInfo | null>(null)
   const [quodVerifiedAt, setQuodVerifiedAt] = useState<string | null>(null)
   const [quodTipo, setQuodTipo] = useState<string | null>(null)
@@ -59,6 +63,7 @@ export default function CreditoPage() {
   const [amount, setAmount] = useState(100000)
   const [selected, setSelected] = useState<Offer | null>(null)
   const [modal, setModal] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
   const [filterType, setFilterType] = useState<string>('todos')
 
@@ -67,15 +72,24 @@ export default function CreditoPage() {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) return
+      setUserId(session.user.id)
       const res = await fetch(`/api/agrorate/score?userId=${session.user.id}`)
       const json = await res.json()
       if (res.ok) {
         setScore(json.score)
+        setTotalRevenue(Number(json.totalRevenue) || 0)
+        setActivityCount(Number(json.activityCount) || 0)
         if (json.quodVerifiedAt) {
           setQuodVerifiedAt(json.quodVerifiedAt)
           setQuodTipo(json.quodTipo || 'PF')
           setQuod({ score: json.quodScore, faixa: json.quodFaixa, capacidade: json.quodCapacidade, tipo: json.quodTipo || 'PF', docMasked: '' })
         }
+      }
+      // Load property name
+      const profRes = await fetch('/api/user/profile')
+      if (profRes.ok) {
+        const prof = await profRes.json()
+        setPropertyName(prof.name || '')
       }
     }
     loadScore()
@@ -141,10 +155,29 @@ export default function CreditoPage() {
     return scoreOk && typeOk
   })
 
-  function handleRequest() {
-    setModal(false)
-    setSent(true)
-    setTimeout(() => setSent(false), 4000)
+  async function handleRequest() {
+    if (!selected) return
+    setSubmitting(true)
+    try {
+      await fetch('/api/agrorate/credito', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          partnerId: null,
+          partnerName: selected.partner,
+          lineName: selected.name,
+          requestedAmount: Math.min(amount, selected.amount),
+          rate: selected.rate,
+          termMonths: selected.term,
+        }),
+      })
+    } catch { /* silent */ } finally {
+      setSubmitting(false)
+      setModal(false)
+      setSent(true)
+      setTimeout(() => setSent(false), 4000)
+    }
   }
 
   return (
@@ -410,26 +443,55 @@ export default function CreditoPage() {
       {/* Modal */}
       {modal && selected && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <h3 className="font-bold text-slate-900 text-lg mb-4">Confirmar Solicitação</h3>
-            <div className="space-y-3 mb-6">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="font-bold text-slate-900 text-lg mb-1">Confirmar Solicitação</h3>
+            <p className="text-xs text-slate-400 mb-4">Revise os dados antes de enviar ao parceiro.</p>
+
+            {/* Oferta */}
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Oferta selecionada</div>
+            <div className="space-y-0 mb-4 border border-slate-100 rounded-xl overflow-hidden">
               {[
                 { label: 'Instituição', value: selected.partner },
                 { label: 'Linha', value: selected.name },
                 { label: 'Valor', value: fmt(Math.min(amount, selected.amount)) },
                 { label: 'Taxa', value: `${selected.rate}% a.m.` },
                 { label: 'Prazo', value: `${selected.term} meses` },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex justify-between py-2 border-b border-slate-100 text-sm">
+              ].map(({ label, value }, i, arr) => (
+                <div key={label} className={`flex justify-between px-4 py-2.5 text-sm ${i < arr.length - 1 ? 'border-b border-slate-100' : ''}`}>
                   <span className="text-slate-500">{label}</span>
                   <span className="font-semibold text-slate-900">{value}</span>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-slate-400 mb-5">Seus dados e score AgroRate serão compartilhados com {selected.partner} para análise.</p>
+
+            {/* Dados compartilhados */}
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Dados compartilhados com {selected.partner}</div>
+            <div className="bg-slate-50 border border-slate-100 rounded-xl overflow-hidden mb-5">
+              {[
+                { label: 'Score AgroRate', value: score !== null ? `${score} pts` : '—' },
+                { label: 'Verificação bureau', value: quodVerifiedAt ? `Verificado (${quodTipo})` : 'Não verificado' },
+                ...(propertyName ? [{ label: 'Produtor', value: propertyName }] : []),
+                { label: 'Receita total', value: totalRevenue > 0 ? fmt(totalRevenue) : '—' },
+                { label: 'Atividades registradas', value: activityCount > 0 ? `${activityCount} ativ.` : '—' },
+              ].map(({ label, value }, i, arr) => (
+                <div key={label} className={`flex justify-between px-4 py-2.5 text-sm ${i < arr.length - 1 ? 'border-b border-slate-100' : ''}`}>
+                  <span className="text-slate-500">{label}</span>
+                  <span className={`font-semibold ${label === 'Score AgroRate' ? 'text-[#065f46]' : label === 'Verificação bureau' && quodVerifiedAt ? 'text-blue-600' : 'text-slate-900'}`}>{value}</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-xs text-slate-400 mb-5">Ao confirmar, você autoriza o compartilhamento desses dados com {selected.partner} para análise de crédito, conforme a LGPD.</p>
             <div className="flex gap-3">
-              <button onClick={() => setModal(false)} className="flex-1 py-3 border border-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors">Cancelar</button>
-              <button onClick={handleRequest} className="flex-1 py-3 bg-[#065f46] text-white rounded-xl font-bold hover:bg-[#047857] transition-colors">Confirmar</button>
+              <button onClick={() => setModal(false)} disabled={submitting} className="flex-1 py-3 border border-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors disabled:opacity-40">Cancelar</button>
+              <button onClick={handleRequest} disabled={submitting} className="flex-1 py-3 bg-[#065f46] text-white rounded-xl font-bold hover:bg-[#047857] transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+                {submitting ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                    Enviando...
+                  </>
+                ) : 'Confirmar'}
+              </button>
             </div>
           </div>
         </div>

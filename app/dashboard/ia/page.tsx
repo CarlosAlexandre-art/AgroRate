@@ -20,22 +20,43 @@ const CHIPS = [
   'Quanto crédito posso conseguir?',
 ]
 
+function formatTs(iso: string) {
+  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
+
 export default function IAPage() {
   const [scoreData, setScoreData] = useState<ScoreData | null>(null)
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [loadingScore, setLoadingScore] = useState(true)
+  const [loadingHistory, setLoadingHistory] = useState(true)
+  const [clearing, setClearing] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     async function load() {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) { setLoadingScore(false); return }
-      const res = await fetch(`/api/agrorate/score?userId=${session.user.id}`)
-      if (res.ok) { const j = await res.json(); setScoreData(j) }
+      if (!session?.user) { setLoadingScore(false); setLoadingHistory(false); return }
+
+      const [scoreRes, historyRes] = await Promise.all([
+        fetch(`/api/agrorate/score?userId=${session.user.id}`),
+        fetch('/api/ai/historico'),
+      ])
+
+      if (scoreRes.ok) setScoreData(await scoreRes.json())
       setLoadingScore(false)
+
+      if (historyRes.ok) {
+        const rows = await historyRes.json()
+        setMsgs(rows.map((r: { role: string; text: string; createdAt: string }) => ({
+          role: r.role as 'user' | 'ai',
+          text: r.text,
+          ts: formatTs(r.createdAt),
+        })))
+      }
+      setLoadingHistory(false)
     }
     load()
   }, [])
@@ -44,12 +65,21 @@ export default function IAPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [msgs, loading])
 
+  async function saveMsg(role: 'user' | 'ai', text: string) {
+    await fetch('/api/ai/historico', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role, text }),
+    })
+  }
+
   async function send(question: string) {
     if (!question.trim() || loading) return
     const ts = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     setMsgs(m => [...m, { role: 'user', text: question, ts }])
     setInput('')
     setLoading(true)
+    saveMsg('user', question)
 
     try {
       const res = await fetch('/api/ai/credito', {
@@ -59,18 +89,28 @@ export default function IAPage() {
       })
       const json = await res.json()
       const aiTs = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-      if (!res.ok || !json.resposta) {
-        const detalhe = json.error ? ` (${json.error})` : ''
-        setMsgs(m => [...m, { role: 'ai', text: `Erro ao conectar com a IA${detalhe}. Tente novamente.`, ts: aiTs }])
-      } else {
-        setMsgs(m => [...m, { role: 'ai', text: json.resposta, ts: aiTs }])
-      }
+      const aiText = (!res.ok || !json.resposta)
+        ? `Erro ao conectar com a IA${json.error ? ` (${json.error})` : ''}. Tente novamente.`
+        : json.resposta
+      setMsgs(m => [...m, { role: 'ai', text: aiText, ts: aiTs }])
+      saveMsg('ai', aiText)
     } catch {
       const aiTs = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-      setMsgs(m => [...m, { role: 'ai', text: 'Erro de conexão. Verifique sua internet e tente novamente.', ts: aiTs }])
+      const err = 'Erro de conexão. Verifique sua internet e tente novamente.'
+      setMsgs(m => [...m, { role: 'ai', text: err, ts: aiTs }])
+      saveMsg('ai', err)
     }
     setLoading(false)
   }
+
+  async function clearHistory() {
+    setClearing(true)
+    await fetch('/api/ai/historico', { method: 'DELETE' })
+    setMsgs([])
+    setClearing(false)
+  }
+
+  const isReady = !loadingScore && !loadingHistory
 
   return (
     <div className="flex flex-col h-full">
@@ -86,25 +126,29 @@ export default function IAPage() {
           <span className="text-violet-600">Eficiência {scoreData.efficiencyScore}</span>
           <span className="text-violet-500">·</span>
           <span className="text-violet-600">Comportamento {scoreData.behaviorScore}</span>
+          {msgs.length > 0 && (
+            <button onClick={clearHistory} disabled={clearing}
+              className="ml-auto text-[10px] text-violet-400 hover:text-red-500 transition-colors disabled:opacity-50">
+              {clearing ? 'Limpando...' : 'Limpar histórico'}
+            </button>
+          )}
         </div>
       )}
 
       {/* Chat area */}
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
 
-        {/* Mensagem de boas-vindas */}
-        {msgs.length === 0 && (
+        {/* Boas-vindas */}
+        {isReady && msgs.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
             <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center text-3xl mb-4">🌾</div>
             <h2 className="text-xl font-bold text-slate-800 mb-2">Conselheiro AgroRate</h2>
             <p className="text-slate-500 text-sm max-w-sm leading-relaxed mb-6">
-              {loadingScore
-                ? 'Carregando seu perfil...'
-                : scoreData
-                  ? `Olá! Estou analisando seu score de ${scoreData.score} pontos. Pergunte qualquer coisa sobre crédito rural, seu score ou como melhorá-lo.`
-                  : 'Configure sua fazenda no AgroOS para que eu possa analisar seu perfil com dados reais.'}
+              {scoreData
+                ? `Olá! Estou analisando seu score de ${scoreData.score} pontos. Pergunte qualquer coisa sobre crédito rural, seu score ou como melhorá-lo.`
+                : 'Configure sua fazenda no AgroOS para que eu possa analisar seu perfil com dados reais.'}
             </p>
-            {!loadingScore && scoreData && (
+            {scoreData && (
               <div className="grid grid-cols-2 gap-2 max-w-md w-full">
                 {CHIPS.slice(0, 4).map(chip => (
                   <button key={chip} onClick={() => send(chip)}
@@ -114,6 +158,13 @@ export default function IAPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {!isReady && (
+          <div className="flex flex-col items-center justify-center h-full text-slate-300 text-sm gap-3">
+            <div className="w-8 h-8 border-2 border-violet-300 border-t-transparent rounded-full animate-spin" />
+            Carregando...
           </div>
         )}
 
@@ -131,8 +182,8 @@ export default function IAPage() {
                   ? 'bg-[#065f46] text-white rounded-tr-sm'
                   : 'bg-white border border-slate-100 text-slate-700 rounded-tl-sm shadow-sm'
               }`}>
-                {msg.text.split('\n').map((line, j) => (
-                  <span key={j}>{line}{j < msg.text.split('\n').length - 1 && <br/>}</span>
+                {msg.text.split('\n').map((line, j, arr) => (
+                  <span key={j}>{line}{j < arr.length - 1 && <br />}</span>
                 ))}
               </div>
               {msg.ts && <span className="text-[10px] text-slate-400 mt-1 px-1">{msg.ts}</span>}
@@ -146,18 +197,18 @@ export default function IAPage() {
             <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center text-sm flex-shrink-0">🌾</div>
             <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
               <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-violet-300 animate-bounce" style={{ animationDelay: '0ms' }}/>
-                <div className="w-2 h-2 rounded-full bg-violet-300 animate-bounce" style={{ animationDelay: '150ms' }}/>
-                <div className="w-2 h-2 rounded-full bg-violet-300 animate-bounce" style={{ animationDelay: '300ms' }}/>
+                <div className="w-2 h-2 rounded-full bg-violet-300 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 rounded-full bg-violet-300 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 rounded-full bg-violet-300 animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
         )}
 
-        <div ref={bottomRef}/>
+        <div ref={bottomRef} />
       </div>
 
-      {/* Chips de sugestão (quando há mensagens) */}
+      {/* Chips */}
       {msgs.length > 0 && !loading && (
         <div className="px-5 py-2 flex gap-2 overflow-x-auto flex-shrink-0 border-t border-slate-50">
           {CHIPS.map(chip => (
@@ -176,13 +227,13 @@ export default function IAPage() {
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder="Pergunte sobre seu score, crédito ou sua fazenda..."
-            disabled={loading || loadingScore}
+            disabled={loading || !isReady}
             className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all disabled:opacity-50 placeholder:text-slate-300"
           />
           <button type="submit" disabled={loading || !input.trim()}
             className="w-11 h-11 rounded-xl bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex-shrink-0">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
           </button>
         </form>

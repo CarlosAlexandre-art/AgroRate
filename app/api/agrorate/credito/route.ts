@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, partnerId, requestedAmount, termMonths } = await request.json()
+    const { userId, partnerId, partnerName, lineName, requestedAmount, rate, termMonths } = await request.json()
     if (!userId || !requestedAmount) return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 })
 
     const user = await prisma.user.findUnique({
@@ -31,7 +31,15 @@ export async function POST(request: NextRequest) {
     if (!user || !user.properties[0]) return NextResponse.json({ error: 'Propriedade não encontrada' }, { status: 404 })
 
     const req = await prisma.creditRequest.create({
-      data: { propertyId: user.properties[0].id, partnerId, requestedAmount, termMonths, status: 'PENDING' },
+      data: {
+        propertyId: user.properties[0].id,
+        partnerId: partnerId ?? null,
+        requestedAmount,
+        interestRate: rate ?? null,
+        termMonths: termMonths ?? null,
+        status: 'PENDING',
+        proposals: [{ partnerName, lineName, requestedAt: new Date().toISOString() }],
+      },
     })
     return NextResponse.json(req, { status: 201 })
   } catch {

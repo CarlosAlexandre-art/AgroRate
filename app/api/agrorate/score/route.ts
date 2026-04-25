@@ -154,6 +154,17 @@ export async function GET(request: NextRequest) {
       ? Math.min(1000, Math.round(scoreComBonus * 0.70 + quodScore * 0.30))
       : scoreComBonus
 
+    // Maintain monthly trendHistory snapshot
+    const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+    const now = new Date()
+    const monthLabel = `${MONTHS[now.getMonth()]}/${String(now.getFullYear()).slice(2)}`
+    const existingHistory: {month: string; score: number; date: string}[] =
+      (agroRateExistente?.trendHistory as any[]) ?? []
+    const hasMonth = existingHistory.some(e => e.month === monthLabel)
+    const newHistory = hasMonth
+      ? existingHistory.map(e => e.month === monthLabel ? { ...e, score: finalScore } : e)
+      : [...existingHistory, { month: monthLabel, score: finalScore, date: now.toISOString() }].slice(-12)
+
     const agroRate = await prisma.agroRate.upsert({
       where: { propertyId: targetPropertyId! },
       update: {
@@ -162,6 +173,7 @@ export async function GET(request: NextRequest) {
         totalRevenue, totalCosts, productivity, marginRate,
         activityCount: property?.activities.length || 0,
         dataCompleteness,
+        trendHistory: newHistory,
         lastCalculated: new Date(),
         nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
@@ -172,6 +184,7 @@ export async function GET(request: NextRequest) {
         totalRevenue, totalCosts, productivity, marginRate,
         activityCount: property?.activities.length || 0,
         dataCompleteness,
+        trendHistory: newHistory,
         lastCalculated: new Date(),
         nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },

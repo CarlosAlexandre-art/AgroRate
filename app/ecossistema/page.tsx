@@ -4,10 +4,10 @@ import Nav from '@/components/Nav'
 const SYSTEMS = [
   {
     name: 'AgroCore',
-    tagline: 'O Marketplace do Agro',
-    color: 'text-amber-700 bg-amber-50 border-amber-200',
-    badge: 'bg-amber-100 text-amber-700',
-    dot: 'bg-amber-500',
+    tagline: 'Soluções Sustentáveis do Campo',
+    color: 'text-green-800 bg-green-50 border-green-200',
+    badge: 'bg-green-100 text-green-800',
+    dot: 'bg-green-700',
     href: 'https://agrolink-opal.vercel.app',
     desc: 'Conecta produtores rurais com prestadores de serviços agrícolas. Pulverização, colheita, tratoreação, análise de solo e muito mais — com pagamento seguro e avaliações reais.',
     role: 'Executa o serviço',

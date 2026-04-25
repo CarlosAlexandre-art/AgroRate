@@ -255,6 +255,23 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Banner aceleração — apenas quando score < 600 */}
+      {data.score < 600 && (
+        <Link href="/dashboard/acelerar"
+          className="flex items-center gap-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-orange-200 rounded-2xl p-4 hover:border-orange-300 transition-all group">
+          <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-xl flex-shrink-0">⚡</div>
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-orange-800 text-sm">Seu score tem potencial para crescer muito</div>
+            <div className="text-orange-600 text-xs mt-0.5">Siga o plano personalizado e ganhe até +{1000 - data.score} pontos</div>
+          </div>
+          <div className="text-orange-400 group-hover:text-orange-600 transition-colors flex-shrink-0">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </Link>
+      )}
+
       {/* Row 2: Métricas da fazenda */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[

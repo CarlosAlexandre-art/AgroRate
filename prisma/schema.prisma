@@ -54,6 +54,7 @@ model User {
   cnpjMasked        String?
   pushSubscriptions PushSubscription[] // AgroOS — não remover
   properties        Property[]
+  aiChatMessages    AiChatMessage[]
   createdAt        DateTime  @default(now())
 }
 
@@ -75,6 +76,7 @@ model Property {
   agroRate       AgroRate?
   creditRequests CreditRequest[]
   commissions    Commission[]
+  documents      PropertyDocument[]
   createdAt      DateTime        @default(now())
 }
 
@@ -332,4 +334,46 @@ model WebhookLog {
   source    String   @default("n8n")
   status    String   @default("received")
   createdAt DateTime @default(now())
+}
+
+// ─── Aprendizado — contador de acessos por módulo ────────────────────────────
+
+model LearningClick {
+  id        String   @id @default(uuid())
+  moduleId  String
+  clickedAt DateTime @default(now())
+
+  @@index([moduleId, clickedAt])
+}
+
+// ─── Histórico de chat IA ────────────────────────────────────────────────────
+
+model AiChatMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String
+  text      String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// ─── Documentos da propriedade ───────────────────────────────────────────────
+
+model PropertyDocument {
+  id          String   @id @default(uuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name        String
+  category    String
+  fileUrl     String
+  fileName    String
+  expiry      DateTime?
+  scoreImpact Int      @default(0)
+  required    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([propertyId])
 }
