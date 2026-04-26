@@ -77,9 +77,9 @@ export default function ConfigPage() {
     const supabase = createClient()
     const ext = file.name.split('.').pop()
     const path = `avatars/${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+    const { error } = await supabase.storage.from('avatares').upload(path, file, { upsert: true })
     if (error) { setProfileMsg({ ok: false, text: 'Erro ao fazer upload da foto.' }); return }
-    const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+    const { data } = supabase.storage.from('avatares').getPublicUrl(path)
     setEditAvatar(data.publicUrl)
   }
 

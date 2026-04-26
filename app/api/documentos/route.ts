@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
 
-async function getPropertyId(userId: string) {
+async function getOrCreatePropertyId(userId: string) {
   const user = await prisma.user.findUnique({
     where: { supabaseId: userId },
     include: { properties: { take: 1, select: { id: true } } },
   })
-  return user?.properties[0]?.id ?? null
+  if (!user) return null
+  if (user.properties[0]) return user.properties[0].id
+  const prop = await prisma.property.create({
+    data: { userId: user.id, name: 'Minha Propriedade' },
+  })
+  return prop.id
 }
 
 export async function GET() {
@@ -15,7 +20,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const propertyId = await getPropertyId(user.id)
+  const propertyId = await getOrCreatePropertyId(user.id)
   if (!propertyId) return NextResponse.json([])
 
   const docs = await prisma.propertyDocument.findMany({
@@ -30,7 +35,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const propertyId = await getPropertyId(user.id)
+  const propertyId = await getOrCreatePropertyId(user.id)
   if (!propertyId) return NextResponse.json({ error: 'Propriedade não encontrada' }, { status: 404 })
 
   const formData = await req.formData()
