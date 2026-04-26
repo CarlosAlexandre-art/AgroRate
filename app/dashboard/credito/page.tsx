@@ -58,6 +58,7 @@ export default function CreditoPage() {
   const [cpf, setCpf] = useState('')
   const [cnpj, setCnpj] = useState('')
   const [docConsent, setDocConsent] = useState(false)
+  const [plan, setPlan] = useState<string>('starter')
   const [quodLoading, setQuodLoading] = useState(false)
   const [quodError, setQuodError] = useState('')
   const [amount, setAmount] = useState(100000)
@@ -85,11 +86,17 @@ export default function CreditoPage() {
           setQuod({ score: json.quodScore, faixa: json.quodFaixa, capacidade: json.quodCapacidade, tipo: json.quodTipo || 'PF', docMasked: '' })
         }
       }
-      // Load property name
-      const profRes = await fetch('/api/user/profile')
+      const [profRes, perfilRes] = await Promise.all([
+        fetch('/api/user/profile'),
+        fetch('/api/perfil/me'),
+      ])
       if (profRes.ok) {
         const prof = await profRes.json()
         setPropertyName(prof.name || '')
+      }
+      if (perfilRes.ok) {
+        const perf = await perfilRes.json()
+        setPlan(perf.plan ?? 'starter')
       }
     }
     loadScore()
@@ -222,7 +229,19 @@ export default function CreditoPage() {
           Vincule seu documento para enriquecer seu score: 70% dados da fazenda + 30% perfil de crédito externo.
         </p>
 
-        {quodVerifiedAt && quod ? (
+        {plan === 'starter' && !quodVerifiedAt ? (
+          <div className="flex flex-col items-center text-center py-4 gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-xl">🔒</div>
+            <div>
+              <p className="text-sm font-semibold text-slate-700">Disponível no plano Pro</p>
+              <p className="text-xs text-slate-400 mt-0.5">Vincule seu CPF/CNPJ para enriquecer seu score com dados externos.</p>
+            </div>
+            <Link href="/dashboard/assinaturas"
+              className="px-5 py-2 bg-[#065f46] text-white text-xs font-bold rounded-xl hover:bg-[#047857] transition-colors">
+              Fazer upgrade
+            </Link>
+          </div>
+        ) : quodVerifiedAt && quod ? (
           <div className="space-y-3">
             {scoreAntes !== null && score !== null && score > scoreAntes && (
               <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">

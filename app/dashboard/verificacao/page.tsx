@@ -11,7 +11,7 @@ type CardData = {
   subtitle: string
   icon: string
   endpoint: string
-  planRequired: 'pro' | 'premium'
+  planRequired: 'pro' | 'enterprise'
   verifiedAtField: string
   inputParam?: { name: string; label: string; placeholder: string; hint: string }
   resultFields: { label: string; field: string }[]
@@ -38,7 +38,7 @@ const CARDS: CardData[] = [
     subtitle: 'Cadastro de Imóveis Rurais — INCRA/RFB',
     icon: '🗺️',
     endpoint: '/api/cafir/verificar',
-    planRequired: 'premium',
+    planRequired: 'enterprise',
     verifiedAtField: 'cafirVerifiedAt',
     inputParam: {
       name: 'cib',
@@ -61,7 +61,7 @@ const CARDS: CardData[] = [
     subtitle: 'Cadastro Ambiental Rural — SICAR',
     icon: '🌿',
     endpoint: '/api/car/verificar',
-    planRequired: 'premium',
+    planRequired: 'enterprise',
     verifiedAtField: 'carVerifiedAt',
     inputParam: {
       name: 'numeroCar',
@@ -84,7 +84,7 @@ const CARDS: CardData[] = [
     subtitle: 'Cadastro Nacional da Agricultura Familiar — CNPJ',
     icon: '🤝',
     endpoint: '/api/caf/verificar',
-    planRequired: 'premium',
+    planRequired: 'enterprise',
     verifiedAtField: 'cafVerifiedAt',
     resultFields: [
       { label: 'Nº CAF', field: 'numeroCaf' },
@@ -100,7 +100,7 @@ const CARDS: CardData[] = [
     subtitle: 'Declaração de Aptidão ao Pronaf — CPF',
     icon: '👨‍🌾',
     endpoint: '/api/dap/pf',
-    planRequired: 'premium',
+    planRequired: 'enterprise',
     verifiedAtField: 'dapVerifiedAt',
     resultFields: [
       { label: 'Nº DAP', field: 'numeroDAP' },
@@ -117,7 +117,7 @@ const CARDS: CardData[] = [
     subtitle: 'Declaração de Aptidão ao Pronaf — CNPJ',
     icon: '🏢',
     endpoint: '/api/dap/pj',
-    planRequired: 'premium',
+    planRequired: 'enterprise',
     verifiedAtField: 'dapVerifiedAt',
     resultFields: [
       { label: 'Nº DAP', field: 'numeroDAP' },
@@ -133,7 +133,7 @@ const CARDS: CardData[] = [
     subtitle: 'Score + pendências + protestos + ações judiciais',
     icon: '🔍',
     endpoint: '/api/dossie/verificar',
-    planRequired: 'premium',
+    planRequired: 'enterprise',
     verifiedAtField: 'dossieVerifiedAt',
     resultFields: [
       { label: 'Nome', field: 'nome' },
@@ -174,9 +174,9 @@ export default function VerificacaoPage() {
     })
   }, [])
 
-  const isPlanOk = (required: 'pro' | 'premium') => {
-    if (required === 'pro')     return ['pro', 'premium', 'enterprise', 'admin'].includes(plan)
-    if (required === 'premium') return ['premium', 'enterprise', 'admin'].includes(plan)
+  const isPlanOk = (required: 'pro' | 'enterprise') => {
+    if (required === 'pro')        return ['pro', 'enterprise', 'admin'].includes(plan)
+    if (required === 'enterprise') return ['enterprise', 'admin'].includes(plan)
     return false
   }
 
@@ -265,7 +265,7 @@ export default function VerificacaoPage() {
                     <span className="font-bold text-slate-900">{card.label}</span>
                     {locked && (
                       <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full uppercase">
-                        {card.planRequired === 'premium' ? 'Premium' : 'Pro'}
+                        {card.planRequired === 'enterprise' ? 'Enterprise' : 'Pro'}
                       </span>
                     )}
                     {!locked && verifiedAt && (
