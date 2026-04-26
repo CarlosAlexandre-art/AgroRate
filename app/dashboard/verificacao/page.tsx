@@ -354,7 +354,7 @@ export default function VerificacaoPage() {
         <div>
           <div className="font-semibold text-blue-800 text-sm mb-1">Como funciona</div>
           <p className="text-xs text-blue-700 leading-relaxed">
-            QUOD está disponível no plano Pro. CAFIR, CAR, CAF/DAP e Dossiê estão no plano Premium. Cada verificação salva os dados automaticamente e impacta positivamente no seu AgroRate Score.
+            QUOD está disponível no plano Pro. CAFIR, CAR, CAF/DAP e Dossiê estão no plano Enterprise. Cada verificação salva os dados automaticamente e impacta positivamente no seu AgroRate Score.
           </p>
         </div>
       </div>
