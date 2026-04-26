@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { groq } from '@/lib/groq'
+import { createClient } from '@/lib/supabase/server'
+import { getUserPlan, hasAccess } from '@/lib/plan-guard'
 
 export async function POST(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
+  const plan = await getUserPlan(user.id)
+  if (!hasAccess(plan, 'pro')) {
+    return NextResponse.json({ error: 'Plano Pro ou superior necessário para usar o Conselheiro IA.' }, { status: 403 })
+  }
+
   try {
     const { score, category, productionScore, efficiencyScore, behaviorScore, operationalScore, totalRevenue, marginRate, question } = await request.json()
 

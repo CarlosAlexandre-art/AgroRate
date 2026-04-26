@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+import Link from 'next/link'
+
 type Msg = { role: 'user' | 'ai'; text: string; ts: string }
 type ScoreData = {
   score: number; category: string
@@ -25,6 +27,7 @@ function formatTs(iso: string) {
 }
 
 export default function IAPage() {
+  const [userPlan, setUserPlan] = useState<string | null>(null)
   const [scoreData, setScoreData] = useState<ScoreData | null>(null)
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [input, setInput] = useState('')
@@ -40,10 +43,16 @@ export default function IAPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) { setLoadingScore(false); setLoadingHistory(false); return }
 
-      const [scoreRes, historyRes] = await Promise.all([
+      const [scoreRes, historyRes, perfilRes] = await Promise.all([
         fetch(`/api/agrorate/score?userId=${session.user.id}`),
         fetch('/api/ai/historico'),
+        fetch('/api/perfil/me'),
       ])
+
+      if (perfilRes.ok) {
+        const p = await perfilRes.json()
+        setUserPlan(p.plan ?? 'starter')
+      }
 
       if (scoreRes.ok) setScoreData(await scoreRes.json())
       setLoadingScore(false)
@@ -111,6 +120,25 @@ export default function IAPage() {
   }
 
   const isReady = !loadingScore && !loadingHistory
+  const isPro = userPlan === 'pro' || userPlan === 'enterprise' || userPlan === 'admin'
+
+  if (isReady && !isPro) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-violet-100 flex items-center justify-center text-3xl mb-5">🌾</div>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Conselheiro IA</h2>
+        <p className="text-slate-500 text-sm max-w-sm leading-relaxed mb-6">
+          O Conselheiro IA está disponível nos planos <strong>Pro</strong> e <strong>Enterprise</strong>.
+          Faça upgrade para ter acesso a análises personalizadas, interpretação do seu score e sugestões de crédito rural.
+        </p>
+        <Link href="/dashboard/assinaturas"
+          className="px-6 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition-colors text-sm">
+          Ver planos e fazer upgrade
+        </Link>
+        <p className="text-xs text-slate-400 mt-4">Plano atual: Free</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full">
