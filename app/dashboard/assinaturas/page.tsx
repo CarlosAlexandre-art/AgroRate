@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -62,7 +62,7 @@ const PLANS = [
   },
 ]
 
-export default function AssinaturasPage() {
+function AssinaturasContent() {
   const [interval, setInterval] = useState<Interval>('monthly')
   const [userPlan, setUserPlan] = useState<string>('starter')
   const [hasCustomer, setHasCustomer] = useState(false)
@@ -154,7 +154,6 @@ export default function AssinaturasPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {PLANS.map(plan => {
           const isCurrent = userPlan === plan.key
-          const isHigher  = (plan.key === 'enterprise' && userPlan === 'pro') || (plan.key === 'pro' && userPlan === 'enterprise')
           return (
             <div key={plan.key}
               className={`relative bg-white rounded-2xl border-2 p-6 flex flex-col gap-5 transition-all ${
@@ -271,5 +270,13 @@ export default function AssinaturasPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function AssinaturasPage() {
+  return (
+    <Suspense>
+      <AssinaturasContent />
+    </Suspense>
   )
 }
