@@ -212,12 +212,17 @@ model AgroRate {
   carSituacao       String?
   carAreaTotal      String?
   carData           Json?
-  // CAF / DAP — Cadastro da Agricultura Familiar
+  // CAF PJ — Cadastro Nacional Agricultura Familiar (CNPJ)
   cafVerifiedAt     DateTime?
   cafNumero         String?
   cafSituacao       String?
   cafData           Json?
-  // Dossiê Completo
+  // DAP PF — Declaração de Aptidão ao Pronaf (CPF)
+  dapVerifiedAt     DateTime?
+  dapNumero         String?
+  dapSituacao       String?
+  dapData           Json?
+  // Dossiê QUOD Completo
   dossieVerifiedAt  DateTime?
   dossieData        Json?
   createdAt         DateTime      @default(now())

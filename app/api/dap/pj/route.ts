@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
-import { consultarCafPj } from '@/lib/directdata'
+import { consultarDapPj } from '@/lib/directdata'
 import { decryptCpf } from '@/lib/quod'
 
-export async function POST(_request: NextRequest) {
+export async function POST() {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -22,41 +22,40 @@ export async function POST(_request: NextRequest) {
     }
 
     const cnpj = decryptCpf(dbUser.cnpjEncrypted)
-    const caf = await consultarCafPj(cnpj)
+    const dap = await consultarDapPj(cnpj)
     const propertyId = dbUser.properties[0].id
 
     await prisma.agroRate.upsert({
       where: { propertyId },
       update: {
-        cafVerifiedAt: new Date(),
-        cafNumero:     caf.numeroCaf,
-        cafSituacao:   caf.situacao,
-        cafData:       caf.raw as object,
+        dapVerifiedAt: new Date(),
+        dapNumero:     dap.numeroDAP,
+        dapSituacao:   dap.razaoSocial,
+        dapData:       dap.raw as object,
       },
       create: {
         propertyId,
-        cafVerifiedAt: new Date(),
-        cafNumero:     caf.numeroCaf,
-        cafSituacao:   caf.situacao,
-        cafData:       caf.raw as object,
+        dapVerifiedAt: new Date(),
+        dapNumero:     dap.numeroDAP,
+        dapSituacao:   dap.razaoSocial,
+        dapData:       dap.raw as object,
       },
     })
 
     return NextResponse.json({
-      cnpj:               caf.cnpj,
-      razaoSocial:        caf.razaoSocial,
-      numeroCaf:          caf.numeroCaf,
-      situacao:           caf.situacao,
-      dataInscricao:      caf.dataInscricao,
-      dataValidade:       caf.dataValidade,
-      municipio:          caf.municipio,
-      uf:                 caf.uf,
-      representanteLegal: caf.representanteLegal,
+      numeroDAP:              dap.numeroDAP,
+      dataEmissao:            dap.dataEmissao,
+      dataValidade:           dap.dataValidade,
+      cnpj:                   dap.cnpj,
+      razaoSocial:            dap.razaoSocial,
+      municipio:              dap.municipio,
+      uf:                     dap.uf,
+      nomeRepresentanteLegal: dap.nomeRepresentanteLegal,
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
-    console.error('CAF PJ erro:', msg)
-    if (msg.includes('não encontrado')) return NextResponse.json({ error: 'CNPJ não encontrado no CAF.' }, { status: 404 })
+    console.error('DAP PJ erro:', msg)
+    if (msg.includes('não encontrado')) return NextResponse.json({ error: 'CNPJ não encontrado no DAP.' }, { status: 404 })
     return NextResponse.json({ error: msg }, { status: msg.includes('configurado') || msg.includes('inválido') ? 503 : 500 })
   }
 }

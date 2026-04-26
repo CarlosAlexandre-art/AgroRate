@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { consultarCar } from '@/lib/directdata'
-import { decryptCpf } from '@/lib/quod'
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,53 +9,57 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
+    const { numeroCar } = await request.json()
+    if (!numeroCar?.trim()) {
+      return NextResponse.json({ error: 'Informe o Número CAR do imóvel.' }, { status: 400 })
+    }
+
     const dbUser = await prisma.user.findUnique({
       where: { supabaseId: user.id },
-      include: { properties: { take: 1, include: { agroRate: true } } },
+      include: { properties: { take: 1 } },
     })
-    if (!dbUser?.cpfEncrypted) {
-      return NextResponse.json({ error: 'Verifique seu CPF primeiro na aba QUOD.' }, { status: 400 })
-    }
-    if (!dbUser.properties[0]) {
+    if (!dbUser?.properties[0]) {
       return NextResponse.json({ error: 'Nenhuma propriedade cadastrada.' }, { status: 400 })
     }
 
-    const cpf = decryptCpf(dbUser.cpfEncrypted)
-    const car = await consultarCar(cpf)
-
+    const car = await consultarCar(numeroCar.trim())
     const propertyId = dbUser.properties[0].id
+
     await prisma.agroRate.upsert({
       where: { propertyId },
       update: {
         carVerifiedAt: new Date(),
-        carNumero:     car.numero,
-        carSituacao:   car.situacao,
-        carAreaTotal:  car.areaTotal,
+        carNumero:     car.inscricaoCAR,
+        carSituacao:   car.situacaoCadastro,
+        carAreaTotal:  car.area,
         carData:       car.raw as object,
       },
       create: {
         propertyId,
         carVerifiedAt: new Date(),
-        carNumero:     car.numero,
-        carSituacao:   car.situacao,
-        carAreaTotal:  car.areaTotal,
+        carNumero:     car.inscricaoCAR,
+        carSituacao:   car.situacaoCadastro,
+        carAreaTotal:  car.area,
         carData:       car.raw as object,
       },
     })
 
     return NextResponse.json({
-      numero:    car.numero,
-      situacao:  car.situacao,
-      areaTotal: car.areaTotal,
-      municipio: car.municipio,
-      uf:        car.uf,
+      inscricaoCAR:         car.inscricaoCAR,
+      situacaoCadastro:     car.situacaoCadastro,
+      condicaoExterna:      car.condicaoExterna,
+      area:                 car.area,
+      municipio:            car.municipio,
+      uf:                   car.uf,
+      dataInscricao:        car.dataInscricao,
+      modulosFiscais:       car.modulosFiscais,
+      vegetacaoNativa:      car.vegetacaoNativa,
+      reservaLegalRecompor: car.reservaLegalRecompor,
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     console.error('CAR erro:', msg)
-    if (msg.includes('não configurado')) {
-      return NextResponse.json({ error: 'API CAR não configurada. Aguarde ativação.' }, { status: 503 })
-    }
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (msg.includes('não encontrado')) return NextResponse.json({ error: 'Número CAR não encontrado.' }, { status: 404 })
+    return NextResponse.json({ error: msg }, { status: msg.includes('configurado') || msg.includes('inválido') ? 503 : 500 })
   }
 }

@@ -63,39 +63,85 @@ const CARDS: CardData[] = [
     endpoint: '/api/car/verificar',
     planRequired: 'premium',
     verifiedAtField: 'carVerifiedAt',
+    inputParam: {
+      name: 'numeroCar',
+      label: 'Número CAR',
+      placeholder: 'Ex: PA-1500107-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+      hint: 'Número de inscrição CAR — disponível no SICAR ou na certidão do imóvel.',
+    },
     resultFields: [
-      { label: 'Número', field: 'numero' },
-      { label: 'Situação', field: 'situacao' },
-      { label: 'Área total', field: 'areaTotal' },
+      { label: 'Inscrição CAR', field: 'inscricaoCAR' },
+      { label: 'Situação', field: 'situacaoCadastro' },
+      { label: 'Área (ha)', field: 'area' },
+      { label: 'Município/UF', field: 'municipioUf' },
+      { label: 'Data inscrição', field: 'dataInscricao' },
+      { label: 'Módulos fiscais', field: 'modulosFiscais' },
     ],
   },
   {
     key: 'caf',
-    label: 'CAF / DAP',
-    subtitle: 'Cadastro da Agricultura Familiar / Pronaf',
-    icon: '👨‍🌾',
+    label: 'CAF PJ',
+    subtitle: 'Cadastro Nacional da Agricultura Familiar — CNPJ',
+    icon: '🤝',
     endpoint: '/api/caf/verificar',
     planRequired: 'premium',
     verifiedAtField: 'cafVerifiedAt',
     resultFields: [
-      { label: 'Número', field: 'numero' },
+      { label: 'Nº CAF', field: 'numeroCaf' },
+      { label: 'Razão Social', field: 'razaoSocial' },
       { label: 'Situação', field: 'situacao' },
-      { label: 'Validade', field: 'validade' },
+      { label: 'Validade', field: 'dataValidade' },
+      { label: 'Município/UF', field: 'municipioUf' },
+    ],
+  },
+  {
+    key: 'dapPf',
+    label: 'DAP — Pessoa Física',
+    subtitle: 'Declaração de Aptidão ao Pronaf — CPF',
+    icon: '👨‍🌾',
+    endpoint: '/api/dap/pf',
+    planRequired: 'premium',
+    verifiedAtField: 'dapVerifiedAt',
+    resultFields: [
+      { label: 'Nº DAP', field: 'numeroDAP' },
+      { label: 'Tipo DAP', field: 'tipoDAP' },
+      { label: 'Validade', field: 'dataValidade' },
+      { label: 'Enquadramento', field: 'enquadramento' },
+      { label: 'Imóvel', field: 'imovelNome' },
+      { label: 'Renda Total', field: 'rendaTotal' },
+    ],
+  },
+  {
+    key: 'dapPj',
+    label: 'DAP — Pessoa Jurídica',
+    subtitle: 'Declaração de Aptidão ao Pronaf — CNPJ',
+    icon: '🏢',
+    endpoint: '/api/dap/pj',
+    planRequired: 'premium',
+    verifiedAtField: 'dapVerifiedAt',
+    resultFields: [
+      { label: 'Nº DAP', field: 'numeroDAP' },
+      { label: 'Razão Social', field: 'razaoSocial' },
+      { label: 'Validade', field: 'dataValidade' },
+      { label: 'Município/UF', field: 'municipioUf' },
+      { label: 'Representante', field: 'nomeRepresentanteLegal' },
     ],
   },
   {
     key: 'dossie',
-    label: 'Dossiê Completo',
-    subtitle: 'Perfil completo: endereços, veículos, imóveis',
+    label: 'Dossiê QUOD Completo',
+    subtitle: 'Score + pendências + protestos + ações judiciais',
     icon: '🔍',
     endpoint: '/api/dossie/verificar',
     planRequired: 'premium',
     verifiedAtField: 'dossieVerifiedAt',
     resultFields: [
-      { label: 'Endereços', field: 'totalEnderecos' },
-      { label: 'Telefones', field: 'totalTelefones' },
-      { label: 'Veículos', field: 'totalVeiculos' },
-      { label: 'Imóveis', field: 'totalImoveis' },
+      { label: 'Nome', field: 'nome' },
+      { label: 'Score PF', field: 'scorePf' },
+      { label: 'Pendências', field: 'pendencias' },
+      { label: 'Protestos', field: 'protestos' },
+      { label: 'Ações Judiciais', field: 'acoesJudiciais' },
+      { label: 'Cheques s/ fundo', field: 'chequesSemFundo' },
     ],
   },
 ]
@@ -117,10 +163,11 @@ export default function VerificacaoPage() {
         const data = await res.json()
         setPlan(data.plan ?? 'free')
         const vats: Record<string, string> = {}
-        if (data.agroRate?.quodVerifiedAt)  vats.quod   = data.agroRate.quodVerifiedAt
-        if (data.agroRate?.cafirVerifiedAt) vats.cafir  = data.agroRate.cafirVerifiedAt
-        if (data.agroRate?.carVerifiedAt)   vats.car    = data.agroRate.carVerifiedAt
-        if (data.agroRate?.cafVerifiedAt)   vats.caf    = data.agroRate.cafVerifiedAt
+        if (data.agroRate?.quodVerifiedAt)   vats.quod   = data.agroRate.quodVerifiedAt
+        if (data.agroRate?.cafirVerifiedAt)  vats.cafir  = data.agroRate.cafirVerifiedAt
+        if (data.agroRate?.carVerifiedAt)    vats.car    = data.agroRate.carVerifiedAt
+        if (data.agroRate?.cafVerifiedAt)    vats.caf    = data.agroRate.cafVerifiedAt
+        if (data.agroRate?.dapVerifiedAt)  { vats.dapPf  = data.agroRate.dapVerifiedAt; vats.dapPj = data.agroRate.dapVerifiedAt }
         if (data.agroRate?.dossieVerifiedAt) vats.dossie = data.agroRate.dossieVerifiedAt
         setVerifiedAts(vats)
       }
