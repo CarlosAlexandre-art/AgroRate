@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-type Status = 'idle' | 'loading' | 'ok' | 'error' | 'pending'
+type Status = 'idle' | 'loading' | 'ok' | 'error'
 
 type CardData = {
   key: string
@@ -13,6 +13,7 @@ type CardData = {
   endpoint: string
   planRequired: 'pro' | 'premium'
   verifiedAtField: string
+  inputParam?: { name: string; label: string; placeholder: string; hint: string }
   resultFields: { label: string; field: string }[]
 }
 
@@ -39,11 +40,19 @@ const CARDS: CardData[] = [
     endpoint: '/api/cafir/verificar',
     planRequired: 'premium',
     verifiedAtField: 'cafirVerifiedAt',
+    inputParam: {
+      name: 'cib',
+      label: 'CIB do Imóvel',
+      placeholder: 'Ex: 123.456.789.789-1',
+      hint: 'Código do Imóvel no INCRA — consta na escritura ou CCIR.',
+    },
     resultFields: [
-      { label: 'Número', field: 'numero' },
+      { label: 'Nome do Imóvel', field: 'nomeImovel' },
       { label: 'Área', field: 'area' },
       { label: 'Situação', field: 'situacao' },
       { label: 'Município/UF', field: 'municipioUf' },
+      { label: 'Data Emissão', field: 'dataEmissao' },
+      { label: 'Cód. INCRA', field: 'codigoINCRA' },
     ],
   },
   {
@@ -97,6 +106,7 @@ export default function VerificacaoPage() {
   const [results, setResults]     = useState<Record<string, Record<string, string>>>({})
   const [errors, setErrors]       = useState<Record<string, string>>({})
   const [verifiedAts, setVerifiedAts] = useState<Record<string, string>>({})
+  const [inputs, setInputs]       = useState<Record<string, string>>({})
 
   useEffect(() => {
     const supabase = createClient()
@@ -126,11 +136,27 @@ export default function VerificacaoPage() {
   async function handleVerify(card: CardData) {
     if (!isPlanOk(card.planRequired)) return
 
+    if (card.inputParam) {
+      const val = (inputs[card.key] || '').trim()
+      if (!val) {
+        setErrors(e => ({ ...e, [card.key]: `Informe o ${card.inputParam!.label} antes de verificar.` }))
+        return
+      }
+    }
+
     setStatuses(s => ({ ...s, [card.key]: 'loading' }))
     setErrors(e => ({ ...e, [card.key]: '' }))
 
+    const body = card.inputParam
+      ? JSON.stringify({ [card.inputParam.name]: inputs[card.key] || '' })
+      : undefined
+
     try {
-      const res = await fetch(card.endpoint, { method: 'POST' })
+      const res = await fetch(card.endpoint, {
+        method: 'POST',
+        headers: card.inputParam ? { 'Content-Type': 'application/json' } : {},
+        body,
+      })
       const data = await res.json()
 
       if (!res.ok) {
@@ -203,6 +229,23 @@ export default function VerificacaoPage() {
                     )}
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">{card.subtitle}</p>
+
+                  {/* Input para cards que precisam de parâmetro manual */}
+                  {!locked && card.inputParam && status !== 'ok' && (
+                    <div className="mt-3 space-y-1">
+                      <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                        {card.inputParam.label}
+                      </label>
+                      <input
+                        type="text"
+                        value={inputs[card.key] || ''}
+                        onChange={e => setInputs(v => ({ ...v, [card.key]: e.target.value }))}
+                        placeholder={card.inputParam.placeholder}
+                        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#065f46]/30 focus:border-[#065f46] bg-slate-50"
+                      />
+                      <p className="text-[10px] text-slate-400">{card.inputParam.hint}</p>
+                    </div>
+                  )}
 
                   {/* Resultado */}
                   {status === 'ok' && result && (
