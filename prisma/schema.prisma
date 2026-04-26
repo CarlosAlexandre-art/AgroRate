@@ -194,36 +194,42 @@ model AgroRate {
   trendHistory      Json?         @default("[]")
   lastCalculated    DateTime      @default(now())
   nextUpdate        DateTime?
-  // QUOD / Direct Data
+  // QUOD / Direct Data — válido 30 dias
   quodScore         Int?
   quodFaixa         String?
   quodCapacidade    String?
   quodVerifiedAt    DateTime?
+  quodValidUntil    DateTime?
   quodTipo          String?       // 'PF' | 'PJ'
-  // CAFIR — Cadastro de Imóveis Rurais (INCRA/RFB)
+  // CAFIR — válido 365 dias
   cafirVerifiedAt   DateTime?
+  cafirValidUntil   DateTime?
   cafirNumero       String?
   cafirArea         String?
   cafirSituacao     String?
   cafirData         Json?
-  // CAR — Cadastro Ambiental Rural (SICAR)
+  // CAR — válido 365 dias
   carVerifiedAt     DateTime?
+  carValidUntil     DateTime?
   carNumero         String?
   carSituacao       String?
   carAreaTotal      String?
   carData           Json?
-  // CAF PJ — Cadastro Nacional Agricultura Familiar (CNPJ)
+  // CAF PJ — válido 180 dias
   cafVerifiedAt     DateTime?
+  cafValidUntil     DateTime?
   cafNumero         String?
   cafSituacao       String?
   cafData           Json?
-  // DAP PF — Declaração de Aptidão ao Pronaf (CPF)
+  // DAP PF — válido 180 dias
   dapVerifiedAt     DateTime?
+  dapValidUntil     DateTime?
   dapNumero         String?
   dapSituacao       String?
   dapData           Json?
-  // Dossiê QUOD Completo
+  // Dossiê QUOD Completo — válido 180 dias
   dossieVerifiedAt  DateTime?
+  dossieValidUntil  DateTime?
   dossieData        Json?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt

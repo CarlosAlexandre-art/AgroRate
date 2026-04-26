@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { consultarQuod, encryptCpf, hashCpf, maskCpf } from '@/lib/quod'
+import { isValid, validUntil } from '@/lib/verification-cache'
+import { getUserPlan, hasAccess, canForce } from '@/lib/plan-guard'
 
 function encryptDoc(v: string) { return encryptCpf(v) }
 function hashDoc(v: string)    { return hashCpf(v) }
@@ -16,7 +18,13 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-    const { cpf, cnpj } = await request.json()
+    const plan = await getUserPlan(user.id)
+    if (!hasAccess(plan, 'pro')) {
+      return NextResponse.json({ error: 'Plano Pro ou superior necessário para consulta QUOD.' }, { status: 403 })
+    }
+
+    const { cpf, cnpj, force } = await request.json()
+    const forceReal = force && canForce(plan)
     const cpfDigits  = cpf  ? cpf.replace(/\D/g, '')  : ''
     const cnpjDigits = cnpj ? cnpj.replace(/\D/g, '') : ''
 
@@ -30,10 +38,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'CNPJ inválido' }, { status: 400 })
     }
 
-    // Consulta QUOD via Direct Data (PF e/ou PJ)
+    if (!forceReal) {
+      const dbUser = await prisma.user.findUnique({
+        where: { supabaseId: user.id },
+        include: { properties: { take: 1, include: { agroRate: true } } },
+      })
+      const cached = dbUser?.properties[0]?.agroRate
+      if (cached && isValid(cached.quodValidUntil)) {
+        return NextResponse.json({
+          score:      cached.quodScore,
+          faixa:      cached.quodFaixa,
+          capacidade: cached.quodCapacidade,
+          tipo:       cached.quodTipo,
+          cached:     true,
+          validUntil: cached.quodValidUntil,
+        })
+      }
+    }
+
     const quod = await consultarQuod(cpfDigits, cnpjDigits || undefined)
 
-    // Salva documentos criptografados no usuário
     const docUpdate: Record<string, string> = {}
     if (cpfDigits) {
       docUpdate.cpfEncrypted = encryptDoc(cpfDigits)
@@ -47,7 +71,6 @@ export async function POST(request: NextRequest) {
     }
     await prisma.user.update({ where: { supabaseId: user.id }, data: docUpdate })
 
-    // Salva score QUOD na propriedade principal
     const dbUser = await prisma.user.findUnique({
       where: { supabaseId: user.id },
       include: { properties: { take: 1 } },
@@ -55,17 +78,20 @@ export async function POST(request: NextRequest) {
 
     if (dbUser?.properties[0]) {
       const propertyId = dbUser.properties[0].id
+      const until = validUntil('quod')
       await prisma.agroRate.upsert({
         where: { propertyId },
         update: {
           quodScore: quod.score, quodFaixa: quod.faixaScore,
-          quodCapacidade: quod.capacidadePagamento, quodVerifiedAt: new Date(),
+          quodCapacidade: quod.capacidadePagamento,
+          quodVerifiedAt: new Date(), quodValidUntil: until,
           quodTipo: quod.tipo,
         },
         create: {
           propertyId,
           quodScore: quod.score, quodFaixa: quod.faixaScore,
-          quodCapacidade: quod.capacidadePagamento, quodVerifiedAt: new Date(),
+          quodCapacidade: quod.capacidadePagamento,
+          quodVerifiedAt: new Date(), quodValidUntil: until,
           quodTipo: quod.tipo,
         },
       })
@@ -74,11 +100,13 @@ export async function POST(request: NextRequest) {
     const docMasked = quod.tipo === 'PJ' && cnpjDigits ? maskCnpj(cnpjDigits) : maskCpf(cpfDigits)
 
     return NextResponse.json({
-      score: quod.score,
-      faixa: quod.faixaScore,
+      score:      quod.score,
+      faixa:      quod.faixaScore,
       capacidade: quod.capacidadePagamento,
-      tipo: quod.tipo,
+      tipo:       quod.tipo,
       docMasked,
+      cached:     false,
+      validUntil: validUntil('quod'),
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)

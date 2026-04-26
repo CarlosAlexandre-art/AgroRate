@@ -150,9 +150,37 @@ export async function GET(request: NextRequest) {
     const agroRateExistente = await prisma.agroRate.findUnique({ where: { propertyId: targetPropertyId! } })
     const quodScore = agroRateExistente?.quodScore ?? null
     const scoreComBonus = Math.min(1000, totalScore + agrocoreBonus)
-    const finalScore = quodScore !== null
+    const scoreComQuod = quodScore !== null
       ? Math.min(1000, Math.round(scoreComBonus * 0.70 + quodScore * 0.30))
       : scoreComBonus
+
+    // Bônus/penalidade das verificações Direct Data
+    let verificacaoBonus = 0
+    if (agroRateExistente) {
+      const ar = agroRateExistente as Record<string, unknown>
+      // DAP ativa = agricultor apto PRONAF (maior credibilidade)
+      if (ar.dapNumero && ar.dapSituacao && String(ar.dapSituacao).toLowerCase().includes('ativ')) verificacaoBonus += 50
+      else if (ar.dapNumero) verificacaoBonus += 20
+      // CAR ativo = regularidade ambiental
+      if (ar.carNumero && String(ar.carSituacao ?? '').toLowerCase().includes('ativo')) verificacaoBonus += 30
+      else if (ar.carNumero) verificacaoBonus += 10
+      // CAFIR = imóvel registrado no INCRA
+      if (ar.cafirNumero) verificacaoBonus += 25
+      // CAF = agricultura familiar homologada
+      if (ar.cafNumero && String(ar.cafSituacao ?? '').toLowerCase().includes('ativ')) verificacaoBonus += 20
+      else if (ar.cafNumero) verificacaoBonus += 8
+      // Dossiê: penalidade por pendências/protestos/ações judiciais
+      if (ar.dossieData) {
+        const d = ar.dossieData as Record<string, unknown>
+        const pendencias = Number(d.pendencias ?? 0)
+        const protestos  = Number(d.protestos ?? 0)
+        const acoes      = Number(d.acoesJudiciais ?? 0)
+        if (pendencias > 0) verificacaoBonus -= Math.min(50, pendencias * 10)
+        if (protestos > 0)  verificacaoBonus -= Math.min(30, protestos * 15)
+        if (acoes > 0)      verificacaoBonus -= Math.min(20, acoes * 10)
+      }
+    }
+    const finalScore = Math.min(1000, Math.max(0, scoreComQuod + verificacaoBonus))
 
     // Maintain monthly trendHistory snapshot
     const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -193,6 +221,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       ...agroRate,
       agrocoreBonus,
+      verificacaoBonus,
       agrocoreConnected: agrocoreData !== null,
     })
   } catch (error) {

@@ -22,10 +22,11 @@ export async function GET() {
     const agroRate = dbUser.properties[0]?.agroRate
 
     return NextResponse.json({
-      name:      dbUser.name,
-      email:     dbUser.email,
-      plan:      dbUser.plan,
-      cpfMasked: dbUser.cpfMasked,
+      name:             dbUser.name,
+      email:            dbUser.email,
+      plan:             dbUser.plan,
+      cpfMasked:        dbUser.cpfMasked,
+      stripeCustomerId: dbUser.stripeCustomerId,
       agroRate: agroRate ? {
         quodVerifiedAt:  agroRate.quodVerifiedAt,
         cafirVerifiedAt: agroRate.cafirVerifiedAt,

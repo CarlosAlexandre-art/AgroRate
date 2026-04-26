@@ -22,6 +22,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/alertas': 'Alertas',
   '/dashboard/ia': 'Conselheiro IA',
   '/dashboard/config': 'Configurações',
+  '/dashboard/assinaturas': 'Assinaturas',
 }
 
 const NAV: { group: string; items: { href: string; label: string; icon: React.ReactNode; badge?: string }[] }[] = [
@@ -93,6 +94,11 @@ const NAV: { group: string; items: { href: string; label: string; icon: React.Re
         href: '/dashboard/ia',
         label: 'Conselheiro IA',
         icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M12 2a8 8 0 0 1 8 8v4a8 8 0 0 1-8 8H8l-4 2v-4a8 8 0 0 1 0-16z"/><path d="M8 12h8M8 8h5"/></svg>,
+      },
+      {
+        href: '/dashboard/assinaturas',
+        label: 'Assinaturas',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/><path d="M6 15h4m4 0h2"/></svg>,
       },
       {
         href: '/dashboard/config',
