@@ -199,7 +199,27 @@ model AgroRate {
   quodFaixa         String?
   quodCapacidade    String?
   quodVerifiedAt    DateTime?
-  quodTipo          String?   // 'PF' | 'PJ'
+  quodTipo          String?       // 'PF' | 'PJ'
+  // CAFIR — Cadastro de Imóveis Rurais (INCRA/RFB)
+  cafirVerifiedAt   DateTime?
+  cafirNumero       String?
+  cafirArea         String?
+  cafirSituacao     String?
+  cafirData         Json?
+  // CAR — Cadastro Ambiental Rural (SICAR)
+  carVerifiedAt     DateTime?
+  carNumero         String?
+  carSituacao       String?
+  carAreaTotal      String?
+  carData           Json?
+  // CAF / DAP — Cadastro da Agricultura Familiar
+  cafVerifiedAt     DateTime?
+  cafNumero         String?
+  cafSituacao       String?
+  cafData           Json?
+  // Dossiê Completo
+  dossieVerifiedAt  DateTime?
+  dossieData        Json?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 }

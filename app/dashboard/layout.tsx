@@ -17,6 +17,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/historico': 'Histórico do Score',
   '/dashboard/simulacoes': 'Minhas Simulações',
   '/dashboard/documentos': 'Documentos',
+  '/dashboard/verificacao': 'Verificação Documental',
   '/dashboard/relatorio': 'Relatório',
   '/dashboard/alertas': 'Alertas',
   '/dashboard/ia': 'Conselheiro IA',
@@ -71,6 +72,11 @@ const NAV: { group: string; items: { href: string; label: string; icon: React.Re
         href: '/dashboard/documentos',
         label: 'Documentos',
         icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>,
+      },
+      {
+        href: '/dashboard/verificacao',
+        label: 'Verificação',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>,
       },
       {
         href: '/dashboard/alertas',
