@@ -11,9 +11,10 @@ type ScoreData = {
   productionScore: number; efficiencyScore: number
   behaviorScore: number; operationalScore: number
   totalRevenue: number; marginRate: number
+  quodScore?: number
 }
 
-const CHIPS = [
+const FALLBACK_CHIPS = [
   'Como posso aumentar meu score?',
   'Qual crédito está disponível para mim agora?',
   'Como melhorar minha eficiência?',
@@ -21,6 +22,54 @@ const CHIPS = [
   'Qual parceiro tem as melhores taxas?',
   'Quanto crédito posso conseguir?',
 ]
+
+function getContextualChips(data: ScoreData): string[] {
+  const chips: string[] = []
+
+  // Score geral
+  if (data.score < 300) {
+    chips.push('Meu score está crítico — por onde começo?')
+    chips.push('Qual a ação mais urgente para sair do vermelho?')
+  } else if (data.score < 450) {
+    chips.push(`Estou com ${data.score} pontos — como chego a 600?`)
+  } else if (data.score < 600) {
+    chips.push('O que está me impedindo de chegar ao score Bom?')
+  } else if (data.score >= 750) {
+    chips.push('Quais linhas de crédito premium tenho acesso agora?')
+  }
+
+  // Sub-score mais fraco
+  const subs = [
+    { label: 'produção',      val: data.productionScore },
+    { label: 'eficiência',    val: data.efficiencyScore },
+    { label: 'comportamento', val: data.behaviorScore },
+    { label: 'operacional',   val: data.operationalScore },
+  ]
+  const weakest = [...subs].sort((a, b) => a.val - b.val)[0]
+  chips.push(`Por que meu score de ${weakest.label} está em ${weakest.val}?`)
+  chips.push(`Como melhorar meu score de ${weakest.label}?`)
+
+  // Margem
+  if (data.marginRate < 0.10) {
+    chips.push('Minha margem está baixa — o que posso fazer?')
+  } else if (data.marginRate > 0.30) {
+    chips.push('Minha margem está boa — como aproveitar para crédito?')
+  } else {
+    chips.push('Quanto crédito consigo com esse score?')
+  }
+
+  // QUOD conectado
+  if (data.quodScore) {
+    chips.push(`Tenho score QUOD de ${data.quodScore} — o que isso significa?`)
+  } else {
+    chips.push('Vale a pena verificar meu CPF no QUOD?')
+  }
+
+  // Sempre inclui crédito
+  chips.push('Quais linhas do Plano Safra se aplicam a mim?')
+
+  return chips.slice(0, 6)
+}
 
 function formatTs(iso: string) {
   return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -178,7 +227,7 @@ export default function IAPage() {
             </p>
             {scoreData && (
               <div className="grid grid-cols-2 gap-2 max-w-md w-full">
-                {CHIPS.slice(0, 4).map(chip => (
+                {getContextualChips(scoreData).slice(0, 4).map((chip: string) => (
                   <button key={chip} onClick={() => send(chip)}
                     className="text-xs text-left px-3 py-2.5 bg-white border border-slate-200 rounded-xl hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 transition-all text-slate-600">
                     {chip}
@@ -239,7 +288,7 @@ export default function IAPage() {
       {/* Chips */}
       {msgs.length > 0 && !loading && (
         <div className="px-5 py-2 flex gap-2 overflow-x-auto flex-shrink-0 border-t border-slate-50">
-          {CHIPS.map(chip => (
+          {(scoreData ? getContextualChips(scoreData) : FALLBACK_CHIPS).map((chip: string) => (
             <button key={chip} onClick={() => send(chip)}
               className="text-xs whitespace-nowrap px-3 py-1.5 bg-white border border-slate-200 rounded-full hover:border-violet-300 hover:text-violet-700 transition-all text-slate-500 flex-shrink-0">
               {chip}

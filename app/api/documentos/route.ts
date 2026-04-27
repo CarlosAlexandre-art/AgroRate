@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 async function getOrCreatePropertyId(userId: string) {
   const user = await prisma.user.findUnique({
@@ -53,14 +54,15 @@ export async function POST(req: NextRequest) {
   const ext = file.name.split('.').pop()
   const path = `${user.id}/${propertyId}/${Date.now()}.${ext}`
   const bytes = await file.arrayBuffer()
+  const admin = createAdminClient()
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await admin.storage
     .from('documents')
     .upload(path, bytes, { contentType: file.type, upsert: false })
 
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
 
-  const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
+  const { data: { publicUrl } } = admin.storage.from('documents').getPublicUrl(path)
 
   const doc = await prisma.propertyDocument.create({
     data: {

@@ -74,13 +74,29 @@ export default function ConfigPage() {
   async function handleAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setProfileSaving(true)
+    setProfileMsg(null)
     const supabase = createClient()
     const ext = file.name.split('.').pop()
     const path = `avatars/${Date.now()}.${ext}`
     const { error } = await supabase.storage.from('avatares').upload(path, file, { upsert: true })
-    if (error) { setProfileMsg({ ok: false, text: 'Erro ao fazer upload da foto.' }); return }
+    if (error) { setProfileSaving(false); setProfileMsg({ ok: false, text: 'Erro ao fazer upload da foto.' }); return }
     const { data } = supabase.storage.from('avatares').getPublicUrl(path)
-    setEditAvatar(data.publicUrl)
+    const newUrl = data.publicUrl
+    setEditAvatar(newUrl)
+    const res = await fetch('/api/user/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: editName, phone: editPhone, avatarUrl: newUrl }),
+    })
+    setProfileSaving(false)
+    if (res.ok) {
+      setUser(u => u ? { ...u, avatarUrl: newUrl } : u)
+      setProfileMsg({ ok: true, text: 'Foto atualizada com sucesso.' })
+      setTimeout(() => setProfileMsg(null), 3000)
+    } else {
+      setProfileMsg({ ok: false, text: 'Foto enviada mas erro ao salvar. Tente novamente.' })
+    }
   }
 
   async function handleSaveProfile() {

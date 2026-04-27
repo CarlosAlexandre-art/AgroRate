@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -11,11 +12,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const doc = await prisma.propertyDocument.findUnique({ where: { id } })
   if (!doc) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
 
-  // Extract storage path from public URL
+  const admin = createAdminClient()
   const url = new URL(doc.fileUrl)
   const storagePath = url.pathname.split('/documents/')[1]
   if (storagePath) {
-    await supabase.storage.from('documents').remove([storagePath])
+    await admin.storage.from('documents').remove([storagePath])
   }
 
   await prisma.propertyDocument.delete({ where: { id } })
@@ -39,17 +40,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   let fileName = doc.fileName
 
   if (file) {
-    // Remove old file
+    const admin = createAdminClient()
     const oldUrl = new URL(doc.fileUrl)
     const oldPath = oldUrl.pathname.split('/documents/')[1]
-    if (oldPath) await supabase.storage.from('documents').remove([oldPath])
+    if (oldPath) await admin.storage.from('documents').remove([oldPath])
 
     const ext = file.name.split('.').pop()
     const path = `${user.id}/${doc.propertyId}/${Date.now()}.${ext}`
     const bytes = await file.arrayBuffer()
-    const { error } = await supabase.storage.from('documents').upload(path, bytes, { contentType: file.type })
+    const { error } = await admin.storage.from('documents').upload(path, bytes, { contentType: file.type })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
+    const { data: { publicUrl } } = admin.storage.from('documents').getPublicUrl(path)
     fileUrl = publicUrl
     fileName = file.name
   }

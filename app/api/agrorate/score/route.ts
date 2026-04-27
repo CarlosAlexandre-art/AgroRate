@@ -137,6 +137,18 @@ export async function GET(request: NextRequest) {
       (totalRevenue > 0 ? 30 : 0) +
       ((property?.activities?.length ?? 0) > 0 ? 20 : 0)
 
+    // Bônus documental: documentos válidos aumentam o score
+    const MAX_DOC_IMPACT = 540
+    const MAX_DOC_BONUS = 80
+    const docs = await prisma.propertyDocument.findMany({ where: { propertyId: targetPropertyId! } })
+    const now2 = new Date()
+    const docImpact = docs.reduce((sum, d) => {
+      if (!d.expiry) return sum + d.scoreImpact
+      const diff = (new Date(d.expiry).getTime() - now2.getTime()) / (1000 * 60 * 60 * 24)
+      return diff >= 0 ? sum + d.scoreImpact : sum
+    }, 0)
+    const documentBonus = Math.round((docImpact / MAX_DOC_IMPACT) * MAX_DOC_BONUS)
+
     // Integração AgroCore: busca dados de serviços/reputação e aplica bônus no score
     const supabaseIdForBonus = userId || null
     let agrocoreBonus = 0
@@ -180,7 +192,7 @@ export async function GET(request: NextRequest) {
         if (acoes > 0)      verificacaoBonus -= Math.min(20, acoes * 10)
       }
     }
-    const finalScore = Math.min(1000, Math.max(0, scoreComQuod + verificacaoBonus))
+    const finalScore = Math.min(1000, Math.max(0, scoreComQuod + verificacaoBonus + documentBonus))
 
     // Maintain monthly trendHistory snapshot
     const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -222,6 +234,7 @@ export async function GET(request: NextRequest) {
       ...agroRate,
       agrocoreBonus,
       verificacaoBonus,
+      documentBonus,
       agrocoreConnected: agrocoreData !== null,
     })
   } catch (error) {
