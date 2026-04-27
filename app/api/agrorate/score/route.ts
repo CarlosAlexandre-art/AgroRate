@@ -138,16 +138,19 @@ export async function GET(request: NextRequest) {
       ((property?.activities?.length ?? 0) > 0 ? 20 : 0)
 
     // Bônus documental: documentos válidos aumentam o score
-    const MAX_DOC_IMPACT = 540
-    const MAX_DOC_BONUS = 80
-    const docs = await prisma.propertyDocument.findMany({ where: { propertyId: targetPropertyId! } })
-    const now2 = new Date()
-    const docImpact = docs.reduce((sum, d) => {
-      if (!d.expiry) return sum + d.scoreImpact
-      const diff = (new Date(d.expiry).getTime() - now2.getTime()) / (1000 * 60 * 60 * 24)
-      return diff >= 0 ? sum + d.scoreImpact : sum
-    }, 0)
-    const documentBonus = Math.round((docImpact / MAX_DOC_IMPACT) * MAX_DOC_BONUS)
+    let documentBonus = 0
+    try {
+      const MAX_DOC_IMPACT = 540
+      const MAX_DOC_BONUS = 80
+      const docs = await prisma.propertyDocument.findMany({ where: { propertyId: targetPropertyId! } })
+      const now2 = new Date()
+      const docImpact = docs.reduce((sum, d) => {
+        if (!d.expiry) return sum + d.scoreImpact
+        const diff = (new Date(d.expiry).getTime() - now2.getTime()) / (1000 * 60 * 60 * 24)
+        return diff >= 0 ? sum + d.scoreImpact : sum
+      }, 0)
+      documentBonus = Math.round((docImpact / MAX_DOC_IMPACT) * MAX_DOC_BONUS)
+    } catch { /* fallback: documentBonus = 0 */ }
 
     // Integração AgroCore: busca dados de serviços/reputação e aplica bônus no score
     const supabaseIdForBonus = userId || null

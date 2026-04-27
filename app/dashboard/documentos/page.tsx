@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 type DocCategory = 'propriedade' | 'fiscal' | 'ambiental' | 'credito'
 
@@ -132,6 +133,13 @@ export default function DocumentosPage() {
         await fetch('/api/documentos', { method: 'POST', body: fd })
       }
       await load()
+
+      // Recalcular score após upload
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user?.id) {
+        fetch(`/api/agrorate/score?userId=${session.user.id}`).catch(() => {})
+      }
     } finally {
       setUploading(null)
     }
@@ -293,7 +301,7 @@ export default function DocumentosPage() {
                     ) : (
                       <>
                         {doc && (
-                          <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer"
+                          <a href={`/api/documentos/view?id=${doc.id}`} target="_blank" rel="noopener noreferrer"
                             className="text-xs text-slate-500 hover:text-[#065f46] transition-colors underline underline-offset-2">
                             Visualizar
                           </a>
