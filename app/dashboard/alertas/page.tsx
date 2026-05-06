@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
 type AlertType = 'score' | 'credito' | 'documento' | 'sistema'
@@ -15,6 +15,7 @@ interface Alert {
   time: string
   read: boolean
   action?: { label: string; href: string }
+  createdAt?: string
 }
 
 const TYPE_META: Record<AlertType, { icon: string; bg: string; text: string; label: string }> = {
@@ -30,43 +31,49 @@ const PRIORITY_META: Record<AlertPriority, { dot: string; label: string }> = {
   baixa: { dot: 'bg-slate-300',  label: 'Baixa' },
 }
 
-const INITIAL_ALERTS: Alert[] = [
-  {
-    id: '1', type: 'score', priority: 'alta', read: false, time: 'Há 5 min',
-    title: 'Seu score subiu 42 pontos!',
-    desc: 'Novas receitas registradas no AgroOS foram processadas. Seu score passou de 634 para 676.',
-    action: { label: 'Ver score', href: '/dashboard' },
-  },
-  {
-    id: '2', type: 'credito', priority: 'alta', read: false, time: 'Há 2h',
-    title: 'Nova oferta: Sicredi Crédito Rural Premium',
-    desc: 'Com seu score atual, você se qualificou para a linha premium do Sicredi com taxa de 1,0% a.m. e até R$ 200.000.',
-    action: { label: 'Ver oferta', href: '/dashboard/credito' },
-  },
-  {
-    id: '3', type: 'documento', priority: 'media', read: false, time: 'Há 1 dia',
-    title: 'ITR vence em 15 dias',
-    desc: 'O Imposto Territorial Rural da sua propriedade vence em 15 dias. Renove para manter seu score operacional.',
-    action: { label: 'Ver documentos', href: '/dashboard/documentos' },
-  },
-  {
-    id: '4', type: 'score', priority: 'media', read: true, time: 'Há 3 dias',
-    title: 'Dica: melhore seu score de eficiência',
-    desc: 'Seu score de Eficiência está em 58/100. Registre seus custos detalhados no AgroOS para melhorar essa dimensão.',
-    action: { label: 'Ir ao AgroOS', href: 'https://agros-os.vercel.app' },
-  },
-  {
-    id: '5', type: 'credito', priority: 'baixa', read: true, time: 'Há 5 dias',
-    title: 'Simulação salva expira em breve',
-    desc: 'Você tem 2 simulações salvas que expiram em 7 dias. Acesse para revisar ou solicitar.',
-    action: { label: 'Ver simulações', href: '/dashboard/simulacoes' },
-  },
-  {
-    id: '6', type: 'sistema', priority: 'baixa', read: true, time: 'Há 1 semana',
-    title: 'AgroRate sincronizado com AgroOS',
-    desc: 'Sincronização automática concluída. 3 novos registros de produção foram incorporados ao seu score.',
-  },
-]
+function guessType(message: string): AlertType {
+  const m = message.toLowerCase()
+  if (m.includes('score') || m.includes('ponto')) return 'score'
+  if (m.includes('crédito') || m.includes('credito') || m.includes('oferta') || m.includes('parceiro')) return 'credito'
+  if (m.includes('document') || m.includes('venc') || m.includes('prazo')) return 'documento'
+  return 'sistema'
+}
+
+function guessPriority(message: string, type: AlertType): AlertPriority {
+  const m = message.toLowerCase()
+  if (m.includes('urgent') || m.includes('vence') || m.includes('vencendo') || type === 'documento') return 'alta'
+  if (type === 'score' || type === 'credito') return 'media'
+  return 'baixa'
+}
+
+function formatRelative(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 2) return 'Agora'
+  if (mins < 60) return `Há ${mins} min`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `Há ${hrs}h`
+  const days = Math.floor(hrs / 24)
+  if (days === 1) return 'Ontem'
+  if (days < 30) return `Há ${days} dias`
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+}
+
+function parseDbAlerts(raw: Array<{ id: string; message: string; type: string; isRead: boolean; createdAt: string }>): Alert[] {
+  return raw.map(a => {
+    const type = (['score','credito','documento','sistema'].includes(a.type) ? a.type : guessType(a.message)) as AlertType
+    return {
+      id: a.id,
+      type,
+      priority: guessPriority(a.message, type),
+      title: a.message.split('\n')[0].replace(/^[✅❌🤝⚙️📊💰📄🚜]+\s*/, '').trim() || a.message,
+      desc: a.message,
+      time: formatRelative(a.createdAt),
+      read: a.isRead,
+      createdAt: a.createdAt,
+    }
+  })
+}
 
 const ALL_TYPES: AlertType[] = ['score', 'credito', 'documento', 'sistema']
 
@@ -79,9 +86,11 @@ const DEFAULT_PREFS: Record<string, boolean> = {
 }
 
 export default function AlertasPage() {
-  const [alerts, setAlerts] = useState<Alert[]>(INITIAL_ALERTS)
+  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'todos' | AlertType>('todos')
   const [onlyUnread, setOnlyUnread] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
   const [prefs, setPrefs] = useState<Record<string, boolean>>(DEFAULT_PREFS)
 
   useEffect(() => {
@@ -91,6 +100,27 @@ export default function AlertasPage() {
     } catch { /* ignore */ }
   }, [])
 
+  const loadAlerts = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/alertas')
+      if (res.ok) {
+        const { alerts: raw } = await res.json()
+        setAlerts(parseDbAlerts(raw))
+      }
+    } catch { /* ignore */ }
+    finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { loadAlerts() }, [loadAlerts])
+
+  const unread = alerts.filter(a => !a.read).length
+
+  useEffect(() => {
+    try { localStorage.setItem('agrorate_unread_count', String(unread)) } catch { /* ignore */ }
+    window.dispatchEvent(new StorageEvent('storage', { key: 'agrorate_unread_count', newValue: String(unread) }))
+  }, [unread])
+
   function togglePref(label: string) {
     setPrefs(prev => {
       const next = { ...prev, [label]: !prev[label] }
@@ -99,25 +129,27 @@ export default function AlertasPage() {
     })
   }
 
-  const unread = alerts.filter(a => !a.read).length
-
-  useEffect(() => {
-    try { localStorage.setItem('agrorate_unread_count', String(unread)) } catch { /* ignore */ }
-  }, [unread])
-
-  function markRead(id: string) {
+  async function markRead(id: string) {
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, read: true } : a))
+    await fetch('/api/alertas', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ alertId: id }) })
   }
 
-  function markAllRead() {
+  async function markAllRead() {
     setAlerts(prev => prev.map(a => ({ ...a, read: true })))
+    await fetch('/api/alertas', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ markAll: true }) })
   }
 
-  function dismiss(id: string) {
-    setAlerts(prev => prev.filter(a => a.id !== id))
-  }
+  const recent = alerts.filter(a => {
+    const daysOld = a.createdAt ? (Date.now() - new Date(a.createdAt).getTime()) / 86400000 : 0
+    return daysOld <= 30
+  })
+  const history = alerts.filter(a => {
+    const daysOld = a.createdAt ? (Date.now() - new Date(a.createdAt).getTime()) / 86400000 : 0
+    return daysOld > 30
+  })
 
-  const visible = alerts.filter(a => {
+  const source = showHistory ? history : recent
+  const visible = source.filter(a => {
     const typeOk = filter === 'todos' || a.type === filter
     const readOk = !onlyUnread || !a.read
     return typeOk && readOk
@@ -139,12 +171,23 @@ export default function AlertasPage() {
         {unread > 0 && (
           <div className="ml-auto flex items-center gap-3">
             <span className="text-xs text-slate-500">{unread} não lidas</span>
-            <button onClick={markAllRead}
-              className="text-xs font-semibold text-[#065f46] hover:underline">
+            <button onClick={markAllRead} className="text-xs font-semibold text-[#065f46] hover:underline">
               Marcar todas como lidas
             </button>
           </div>
         )}
+      </div>
+
+      {/* Abas recente / histórico */}
+      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+        <button onClick={() => setShowHistory(false)}
+          className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${!showHistory ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>
+          Recentes {unread > 0 && !showHistory && <span className="ml-1 bg-[#065f46] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unread}</span>}
+        </button>
+        <button onClick={() => setShowHistory(true)}
+          className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${showHistory ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>
+          Histórico {history.length > 0 && <span className="ml-1 text-[10px] text-slate-400">({history.length})</span>}
+        </button>
       </div>
 
       {/* Filtros */}
@@ -162,7 +205,7 @@ export default function AlertasPage() {
             </button>
           )
         })}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto">
           <button onClick={() => setOnlyUnread(v => !v)}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium border transition-colors ${onlyUnread ? 'bg-slate-800 text-white border-slate-800' : 'bg-white border-slate-200 text-slate-600'}`}>
             <div className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center transition-colors ${onlyUnread ? 'border-white bg-white' : 'border-slate-400'}`}>
@@ -175,26 +218,28 @@ export default function AlertasPage() {
 
       {/* Lista */}
       <div className="space-y-3">
-        {visible.length === 0 && (
+        {loading ? (
+          [1,2,3].map(i => <div key={i} className="h-24 bg-slate-100 rounded-2xl animate-pulse"/>)
+        ) : visible.length === 0 ? (
           <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center">
-            <div className="text-4xl mb-3">🎉</div>
-            <div className="font-semibold text-slate-700 mb-1">Tudo em dia!</div>
-            <div className="text-sm text-slate-400">Nenhuma notificação para este filtro.</div>
+            <div className="text-4xl mb-3">{showHistory ? '📚' : '🎉'}</div>
+            <div className="font-semibold text-slate-700 mb-1">
+              {showHistory ? 'Nenhum alerta antigo' : 'Tudo em dia!'}
+            </div>
+            <div className="text-sm text-slate-400">
+              {showHistory ? 'Alertas com mais de 30 dias aparecerão aqui.' : 'Nenhuma notificação para este filtro.'}
+            </div>
           </div>
-        )}
-        {visible.map(alert => {
+        ) : visible.map(alert => {
           const meta = TYPE_META[alert.type]
           const pri = PRIORITY_META[alert.priority]
           return (
             <div key={alert.id}
               className={`bg-white rounded-2xl border p-5 transition-all ${alert.read ? 'border-slate-100 opacity-70' : 'border-slate-200 shadow-sm'}`}>
               <div className="flex items-start gap-4">
-                {/* Icon */}
                 <div className={`w-10 h-10 rounded-xl ${meta.bg} flex items-center justify-center text-xl flex-shrink-0`}>
                   {meta.icon}
                 </div>
-
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${meta.bg} ${meta.text}`}>{meta.label}</span>
@@ -221,10 +266,6 @@ export default function AlertasPage() {
                         Marcar como lida
                       </button>
                     )}
-                    <button onClick={() => dismiss(alert.id)}
-                      className="text-xs text-red-400 hover:text-red-600 transition-colors ml-auto">
-                      Dispensar
-                    </button>
                   </div>
                 </div>
               </div>
@@ -233,7 +274,7 @@ export default function AlertasPage() {
         })}
       </div>
 
-      {/* Configurar alertas */}
+      {/* Preferências */}
       <div className="bg-slate-50 rounded-2xl border border-slate-100 p-5">
         <div className="flex items-center gap-3 mb-4">
           <span className="text-slate-600 font-semibold text-sm">Preferências de alertas</span>

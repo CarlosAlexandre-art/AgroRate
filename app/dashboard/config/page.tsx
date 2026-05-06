@@ -33,7 +33,6 @@ export default function ConfigPage() {
 
   // Consents
   const [consents, setConsents] = useState<Record<string, boolean>>(DEFAULT_CONSENTS)
-  const [consentSaving, setConsentSaving] = useState(false)
   const [consentMsg, setConsentMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   useEffect(() => {
@@ -113,31 +112,34 @@ export default function ConfigPage() {
     }
   }
 
+  async function saveConsents(next: Record<string, boolean>) {
+    try { localStorage.setItem('agrorate_consents', JSON.stringify(next)) } catch { /* ignore */ }
+    const res = await fetch('/api/user/consents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ consents: next }),
+    })
+    if (res.ok) {
+      setConsentMsg({ ok: true, text: 'Salvo.' })
+    } else {
+      setConsentMsg({ ok: false, text: 'Erro ao salvar.' })
+    }
+    setTimeout(() => setConsentMsg(null), 2000)
+  }
+
   function toggleConsent(id: string) {
-    setConsents(c => ({ ...c, [id]: !c[id] }))
+    setConsents(c => {
+      const next = { ...c, [id]: !c[id] }
+      saveConsents(next)
+      return next
+    })
   }
 
   function toggleAll() {
     const next = !Object.values(consents).every(Boolean)
-    setConsents(Object.fromEntries(CONSENTS.map(c => [c.id, next])))
-  }
-
-  async function handleSaveConsents() {
-    setConsentSaving(true)
-    setConsentMsg(null)
-    try { localStorage.setItem('agrorate_consents', JSON.stringify(consents)) } catch { /* ignore */ }
-    const res = await fetch('/api/user/consents', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ consents }),
-    })
-    setConsentSaving(false)
-    if (res.ok) {
-      setConsentMsg({ ok: true, text: 'Consentimentos salvos com sucesso.' })
-    } else {
-      setConsentMsg({ ok: false, text: 'Erro ao salvar. Tente novamente.' })
-    }
-    setTimeout(() => setConsentMsg(null), 3000)
+    const all = Object.fromEntries(CONSENTS.map(c => [c.id, next]))
+    setConsents(all)
+    saveConsents(all)
   }
 
   async function handleSignOut() {
@@ -337,10 +339,6 @@ export default function ConfigPage() {
           </div>
         )}
 
-        <button onClick={handleSaveConsents} disabled={consentSaving}
-          className="mt-3 w-full py-2.5 rounded-xl bg-[#065f46] text-white text-sm font-semibold hover:bg-[#047857] transition-colors disabled:opacity-50">
-          {consentSaving ? 'Salvando…' : 'Salvar consentimentos'}
-        </button>
 
         <div className="mt-3 flex items-start gap-2 p-3 bg-blue-50 rounded-xl">
           <span className="text-base flex-shrink-0">🔒</span>
