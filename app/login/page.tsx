@@ -17,10 +17,22 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const supabase = createClient()
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
-    if (err) { setError(err.message); setLoading(false); return }
-    router.push('/dashboard')
+    try {
+      const supabase = createClient()
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+      if (err) {
+        setError(err.message === 'Invalid login credentials'
+          ? 'E-mail ou senha incorretos. Tente novamente.'
+          : err.message)
+        setLoading(false)
+        return
+      }
+      router.push('/dashboard')
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Erro ao conectar. Verifique sua conexão.'
+      setError(msg)
+      setLoading(false)
+    }
   }
 
   return (
@@ -56,7 +68,7 @@ export default function LoginPage() {
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl flex gap-2">
                 <span>⚠️</span>
-                <span>{error === 'Invalid login credentials' ? 'E-mail ou senha incorretos. Tente novamente.' : error}</span>
+                <span>{error}</span>
               </div>
             )}
             <div>

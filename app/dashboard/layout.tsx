@@ -158,8 +158,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { router.push('/login'); return }
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session?.user) { router.push('/login'); return }
+      const user = session.user
       const name = user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário'
       setUserName(name)
       setUserInitial(name[0]?.toUpperCase() || 'U')
