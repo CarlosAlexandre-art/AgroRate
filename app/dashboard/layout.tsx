@@ -83,7 +83,6 @@ const NAV: { group: string; items: { href: string; label: string; icon: React.Re
         href: '/dashboard/alertas',
         label: 'Alertas',
         icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
-        badge: '3',
       },
     ],
   },
@@ -111,7 +110,7 @@ const NAV: { group: string; items: { href: string; label: string; icon: React.Re
 
 const NAV_ECO = [
   { href: 'https://agrolink-opal.vercel.app', label: 'AgroCore', dot: 'bg-[#679d3f]' },
-  { href: 'https://agros-os.vercel.app', label: 'AgroOS', dot: 'bg-emerald-400' },
+  { href: 'https://agroos.site', label: 'SmartAgroOS', dot: 'bg-emerald-400' },
 ]
 
 function NavItem({ href, label, icon, active, badge, onClick }: { href: string; label: string; icon: React.ReactNode; active: boolean; badge?: string; onClick?: () => void }) {
@@ -137,10 +136,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [userInitial, setUserInitial] = useState('U')
   const [score, setScore] = useState<number | null>(null)
   const [scoreLoaded, setScoreLoaded] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
+
+  useEffect(() => {
+    function syncStorage() {
+      try {
+        const n = parseInt(localStorage.getItem('agrorate_unread_count') ?? '0', 10)
+        setUnreadCount(isNaN(n) ? 0 : n)
+        const s = parseInt(localStorage.getItem('agrorate_current_score') ?? '', 10)
+        if (!isNaN(s)) setScore(s)
+      } catch { /* ignore */ }
+    }
+    syncStorage()
+    window.addEventListener('storage', syncStorage)
+    return () => window.removeEventListener('storage', syncStorage)
+  }, [])
 
   useEffect(() => {
     const supabase = createClient()
@@ -280,7 +294,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <path strokeLinecap="round" strokeLinejoin="round" d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.73 21a2 2 0 0 1-3.46 0"/>
               </svg>
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">3</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </Link>
             <Link href="/dashboard/credito"
               className="flex items-center gap-1.5 bg-[#065f46] text-white text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-[#047857] transition-colors">

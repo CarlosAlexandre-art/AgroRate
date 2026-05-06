@@ -71,6 +71,7 @@ export default function DocumentosPage() {
   const [filterStatus, setFilterStatus] = useState<'todos' | 'valido' | 'vencendo' | 'vencido' | 'pendente'>('todos')
   const [uploading, setUploading] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [expiryModal, setExpiryModal] = useState<{ templateName: string } | null>(null)
   const [expiryValue, setExpiryValue] = useState('')
   const [pendingFile, setPendingFile] = useState<{ file: File; templateName: string } | null>(null)
@@ -117,6 +118,7 @@ export default function DocumentosPage() {
 
   async function uploadFile(file: File, tpl: DocTemplate, expiry: string | null) {
     setUploading(tpl.name)
+    setUploadError(null)
     try {
       const fd = new FormData()
       fd.append('file', file)
@@ -127,18 +129,30 @@ export default function DocumentosPage() {
       if (expiry) fd.append('expiry', expiry)
 
       const existing = getDoc(tpl.name)
-      if (existing) {
-        await fetch(`/api/documentos/${existing.id}`, { method: 'PATCH', body: fd })
-      } else {
-        await fetch('/api/documentos', { method: 'POST', body: fd })
+      const res = existing
+        ? await fetch(`/api/documentos/${existing.id}`, { method: 'PATCH', body: fd })
+        : await fetch('/api/documentos', { method: 'POST', body: fd })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Erro desconhecido' }))
+        setUploadError(err.error || `Erro ${res.status} ao enviar documento`)
+        return
       }
+
       await load()
 
-      // Recalcular score após upload
+      // Recalcular score e atualizar sidebar
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user?.id) {
-        fetch(`/api/agrorate/score?userId=${session.user.id}`).catch(() => {})
+        try {
+          const scoreRes = await fetch(`/api/agrorate/score?userId=${session.user.id}`)
+          if (scoreRes.ok) {
+            const scoreData = await scoreRes.json()
+            localStorage.setItem('agrorate_current_score', String(scoreData.score))
+            window.dispatchEvent(new StorageEvent('storage', { key: 'agrorate_current_score' }))
+          }
+        } catch { /* score indisponível */ }
       }
     } finally {
       setUploading(null)
@@ -165,7 +179,7 @@ export default function DocumentosPage() {
   const totalImpact = TEMPLATES.reduce((s, tpl) => {
     const doc = getDoc(tpl.name)
     const st = docStatus(doc)
-    return st === 'valido' ? s + tpl.scoreImpact : s
+    return (st === 'valido' || st === 'vencendo') ? s + tpl.scoreImpact : s
   }, 0)
 
   const pendingRequired = TEMPLATES.filter(t => t.required && docStatus(getDoc(t.name)) !== 'valido').length
@@ -180,6 +194,17 @@ export default function DocumentosPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-5">
       <input ref={fileRef} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} />
+
+      {uploadError && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
+          <span className="text-xl flex-shrink-0">❌</span>
+          <div className="flex-1">
+            <div className="font-semibold text-red-800 text-sm">Erro ao enviar documento</div>
+            <div className="text-red-700 text-xs mt-0.5">{uploadError}</div>
+          </div>
+          <button onClick={() => setUploadError(null)} className="text-red-400 hover:text-red-600 text-sm font-bold">✕</button>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-center gap-4">

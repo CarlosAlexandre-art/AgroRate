@@ -73,30 +73,24 @@ export default function ConfigPage() {
 
   async function handleAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
     setProfileSaving(true)
     setProfileMsg(null)
-    const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const path = `avatars/${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from('avatares').upload(path, file, { upsert: true })
-    if (error) { setProfileSaving(false); setProfileMsg({ ok: false, text: 'Erro ao fazer upload da foto.' }); return }
-    const { data } = supabase.storage.from('avatares').getPublicUrl(path)
-    const newUrl = data.publicUrl
-    setEditAvatar(newUrl)
-    const res = await fetch('/api/user/profile', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: editName, phone: editPhone, avatarUrl: newUrl }),
-    })
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/user/avatar', { method: 'POST', body: fd })
     setProfileSaving(false)
-    if (res.ok) {
-      setUser(u => u ? { ...u, avatarUrl: newUrl } : u)
-      setProfileMsg({ ok: true, text: 'Foto atualizada com sucesso.' })
-      setTimeout(() => setProfileMsg(null), 3000)
-    } else {
-      setProfileMsg({ ok: false, text: 'Foto enviada mas erro ao salvar. Tente novamente.' })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Erro desconhecido' }))
+      setProfileMsg({ ok: false, text: err.error || 'Erro ao fazer upload da foto.' })
+      return
     }
+    const { avatarUrl } = await res.json()
+    setEditAvatar(avatarUrl)
+    setUser(u => u ? { ...u, avatarUrl } : u)
+    setProfileMsg({ ok: true, text: 'Foto atualizada com sucesso.' })
+    setTimeout(() => setProfileMsg(null), 3000)
   }
 
   async function handleSaveProfile() {
@@ -283,7 +277,7 @@ export default function ConfigPage() {
         <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Conexão com o ecossistema</div>
         <div className="space-y-3">
           {[
-            { name: 'AgroOS', desc: 'Sistema Operacional da Fazenda', href: 'https://agros-os.vercel.app', dot: 'bg-emerald-400' },
+            { name: 'SmartAgroOS', desc: 'Sistema Operacional da Fazenda', href: 'https://agroos.site', dot: 'bg-emerald-400' },
             { name: 'AgroCore', desc: 'Marketplace de Serviços Agrícolas', href: 'https://agrolink-opal.vercel.app', dot: 'bg-amber-400' },
           ].map(sys => (
             <div key={sys.name} className="flex items-center gap-4 p-3 rounded-xl bg-slate-50">
@@ -360,10 +354,10 @@ export default function ConfigPage() {
       <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
         <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Ações da conta</div>
         <div className="space-y-2">
-          <a href="https://agros-os.vercel.app" target="_blank" rel="noopener noreferrer"
+          <a href="https://agroos.site" target="_blank" rel="noopener noreferrer"
             className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200 text-slate-700 font-semibold text-sm hover:bg-slate-50 transition-colors">
             <span className="text-base">🖥️</span>
-            Gerenciar dados da fazenda no AgroOS
+            Gerenciar dados da fazenda no SmartAgroOS
           </a>
           <button onClick={handleSignOut}
             className="w-full flex items-center gap-3 p-3 rounded-xl border border-red-100 text-red-600 font-semibold text-sm hover:bg-red-50 transition-colors">
@@ -376,7 +370,7 @@ export default function ConfigPage() {
       </div>
 
       <p className="text-center text-xs text-slate-300 pb-4">
-        AgroRate v1.0 · Ecossistema AgroCore · AgroOS · AgroRate
+        AgroRate v1.0 · Ecossistema AgroCore · SmartAgroOS · AgroRate
       </p>
     </div>
   )

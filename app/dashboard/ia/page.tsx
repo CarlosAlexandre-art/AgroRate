@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 
 import Link from 'next/link'
 
-type Msg = { role: 'user' | 'ai'; text: string; ts: string }
+type Msg = { role: 'user' | 'ai'; text: string; ts: string; iso?: string }
 type ScoreData = {
   score: number; category: string
   productionScore: number; efficiencyScore: number
@@ -75,6 +75,20 @@ function formatTs(iso: string) {
   return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 }
 
+function formatDateLabel(iso: string): string {
+  const d = new Date(iso)
+  const now = new Date()
+  const diff = Math.floor((now.getTime() - d.getTime()) / 86400000)
+  if (diff === 0) return 'Hoje'
+  if (diff === 1) return 'Ontem'
+  if (diff < 7) return d.toLocaleDateString('pt-BR', { weekday: 'long' })
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+}
+
+function isSameDay(a: string, b: string) {
+  return new Date(a).toDateString() === new Date(b).toDateString()
+}
+
 export default function IAPage() {
   const [userPlan, setUserPlan] = useState<string | null>(null)
   const [scoreData, setScoreData] = useState<ScoreData | null>(null)
@@ -112,6 +126,7 @@ export default function IAPage() {
           role: r.role as 'user' | 'ai',
           text: r.text,
           ts: formatTs(r.createdAt),
+          iso: r.createdAt,
         })))
       }
       setLoadingHistory(false)
@@ -133,8 +148,10 @@ export default function IAPage() {
 
   async function send(question: string) {
     if (!question.trim() || loading) return
-    const ts = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    setMsgs(m => [...m, { role: 'user', text: question, ts }])
+    const now = new Date()
+    const ts = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    const iso = now.toISOString()
+    setMsgs(m => [...m, { role: 'user', text: question, ts, iso }])
     setInput('')
     setLoading(true)
     saveMsg('user', question)
@@ -146,16 +163,20 @@ export default function IAPage() {
         body: JSON.stringify({ ...scoreData, question }),
       })
       const json = await res.json()
-      const aiTs = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      const aiNow = new Date()
+      const aiTs = aiNow.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      const aiIso = aiNow.toISOString()
       const aiText = (!res.ok || !json.resposta)
         ? `Erro ao conectar com a IA${json.error ? ` (${json.error})` : ''}. Tente novamente.`
         : json.resposta
-      setMsgs(m => [...m, { role: 'ai', text: aiText, ts: aiTs }])
+      setMsgs(m => [...m, { role: 'ai', text: aiText, ts: aiTs, iso: aiIso }])
       saveMsg('ai', aiText)
     } catch {
-      const aiTs = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      const aiNow = new Date()
+      const aiTs = aiNow.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      const aiIso = aiNow.toISOString()
       const err = 'Erro de conexão. Verifique sua internet e tente novamente.'
-      setMsgs(m => [...m, { role: 'ai', text: err, ts: aiTs }])
+      setMsgs(m => [...m, { role: 'ai', text: err, ts: aiTs, iso: aiIso }])
       saveMsg('ai', err)
     }
     setLoading(false)
@@ -198,11 +219,11 @@ export default function IAPage() {
           <span className="text-violet-600 font-semibold">🌾 IA conectada ao seu perfil:</span>
           <span className="text-violet-700 font-bold">Score {scoreData.score}</span>
           <span className="text-violet-500">·</span>
-          <span className="text-violet-600">Produção {scoreData.productionScore}</span>
-          <span className="text-violet-500">·</span>
-          <span className="text-violet-600">Eficiência {scoreData.efficiencyScore}</span>
-          <span className="text-violet-500">·</span>
-          <span className="text-violet-600">Comportamento {scoreData.behaviorScore}</span>
+          <span className="text-violet-600 hidden sm:inline">Fazenda {Math.round((scoreData.productionScore * 35 + scoreData.efficiencyScore * 25) / 60)}</span>
+          <span className="text-violet-500 hidden sm:inline">·</span>
+          <span className="text-violet-600 hidden sm:inline">Perfil {scoreData.behaviorScore}</span>
+          <span className="text-violet-500 hidden sm:inline">·</span>
+          <span className="text-violet-600 hidden sm:inline">Docs {scoreData.operationalScore}</span>
           {msgs.length > 0 && (
             <button onClick={clearHistory} disabled={clearing}
               className="ml-auto text-[10px] text-violet-400 hover:text-red-500 transition-colors disabled:opacity-50">
@@ -246,8 +267,20 @@ export default function IAPage() {
         )}
 
         {/* Mensagens */}
-        {msgs.map((msg, i) => (
-          <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+        {msgs.map((msg, i) => {
+          const showSep = msg.iso && (i === 0 || !isSameDay(msg.iso, msgs[i - 1].iso ?? ''))
+          return (
+          <div key={i}>
+            {showSep && msg.iso && (
+              <div className="flex items-center gap-3 py-1 mb-2">
+                <div className="flex-1 h-px bg-slate-100"/>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-1">
+                  {formatDateLabel(msg.iso)}
+                </span>
+                <div className="flex-1 h-px bg-slate-100"/>
+              </div>
+            )}
+            <div className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0 ${
               msg.role === 'ai' ? 'bg-violet-100 text-violet-600' : 'bg-[#065f46] text-white text-xs font-bold'
             }`}>
@@ -265,8 +298,10 @@ export default function IAPage() {
               </div>
               {msg.ts && <span className="text-[10px] text-slate-400 mt-1 px-1">{msg.ts}</span>}
             </div>
+            </div>
           </div>
-        ))}
+          )
+        })}
 
         {/* Loading */}
         {loading && (

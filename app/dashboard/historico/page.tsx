@@ -103,8 +103,17 @@ export default function HistoricoPage() {
         @media print {
           body * { visibility: hidden; }
           #print-area, #print-area * { visibility: visible; }
-          #print-area { position: fixed; inset: 0; padding: 24px; }
+          #print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            background: white !important;
+          }
           .no-print { display: none !important; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          @page { size: A4 portrait; margin: 15mm 20mm; }
+          .print-break { page-break-before: always; break-before: page; }
         }
       `}</style>
 
@@ -170,7 +179,7 @@ export default function HistoricoPage() {
 
         {/* Tabela mensal */}
         {trendHistory.length >= 2 && (
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="print-break bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-50">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Detalhamento mensal</div>
             </div>

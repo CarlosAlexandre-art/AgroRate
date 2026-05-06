@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 type AlertType = 'score' | 'credito' | 'documento' | 'sistema'
@@ -70,12 +70,40 @@ const INITIAL_ALERTS: Alert[] = [
 
 const ALL_TYPES: AlertType[] = ['score', 'credito', 'documento', 'sistema']
 
+const PREF_LABELS = ['Mudanças no score', 'Novas ofertas de crédito', 'Vencimento de documentos', 'Atualizações do sistema']
+const DEFAULT_PREFS: Record<string, boolean> = {
+  'Mudanças no score': true,
+  'Novas ofertas de crédito': true,
+  'Vencimento de documentos': true,
+  'Atualizações do sistema': false,
+}
+
 export default function AlertasPage() {
   const [alerts, setAlerts] = useState<Alert[]>(INITIAL_ALERTS)
   const [filter, setFilter] = useState<'todos' | AlertType>('todos')
   const [onlyUnread, setOnlyUnread] = useState(false)
+  const [prefs, setPrefs] = useState<Record<string, boolean>>(DEFAULT_PREFS)
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('agrorate_alert_prefs')
+      if (stored) setPrefs({ ...DEFAULT_PREFS, ...JSON.parse(stored) })
+    } catch { /* ignore */ }
+  }, [])
+
+  function togglePref(label: string) {
+    setPrefs(prev => {
+      const next = { ...prev, [label]: !prev[label] }
+      try { localStorage.setItem('agrorate_alert_prefs', JSON.stringify(next)) } catch { /* ignore */ }
+      return next
+    })
+  }
 
   const unread = alerts.filter(a => !a.read).length
+
+  useEffect(() => {
+    try { localStorage.setItem('agrorate_unread_count', String(unread)) } catch { /* ignore */ }
+  }, [unread])
 
   function markRead(id: string) {
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, read: true } : a))
@@ -212,18 +240,14 @@ export default function AlertasPage() {
           <span className="text-xs text-slate-400">(em breve: push no WhatsApp e e-mail)</span>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: 'Mudanças no score', active: true },
-            { label: 'Novas ofertas de crédito', active: true },
-            { label: 'Vencimento de documentos', active: true },
-            { label: 'Atualizações do sistema', active: false },
-          ].map(item => (
-            <div key={item.label} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100">
-              <div className={`w-8 h-4 rounded-full transition-colors relative ${item.active ? 'bg-[#065f46]' : 'bg-slate-200'}`}>
-                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-all ${item.active ? 'left-4' : 'left-0.5'}`}/>
+          {PREF_LABELS.map(label => (
+            <button key={label} onClick={() => togglePref(label)}
+              className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 w-full text-left hover:bg-slate-50 transition-colors cursor-pointer">
+              <div className={`w-8 h-4 rounded-full transition-colors relative flex-shrink-0 ${prefs[label] ? 'bg-[#065f46]' : 'bg-slate-200'}`}>
+                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-all ${prefs[label] ? 'left-4' : 'left-0.5'}`}/>
               </div>
-              <span className="text-xs text-slate-600">{item.label}</span>
-            </div>
+              <span className="text-xs text-slate-600">{label}</span>
+            </button>
           ))}
         </div>
       </div>

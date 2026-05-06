@@ -21,10 +21,9 @@ const CATEGORY_META: Record<string, { label: string; color: string; bg: string }
 }
 
 const DIMENSIONS = [
-  { key: 'productionScore',  label: 'Produção',    weight: '30%', desc: 'Volume, diversificação e regularidade da produção agropecuária' },
-  { key: 'efficiencyScore',  label: 'Eficiência',  weight: '25%', desc: 'Margem operacional, custo por hectare e produtividade' },
-  { key: 'behaviorScore',    label: 'Comportamento', weight: '25%', desc: 'Histórico de pagamentos, adimplência e uso de crédito' },
-  { key: 'operationalScore', label: 'Operacional', weight: '20%', desc: 'Documentação, regularidade ambiental e fundiária' },
+  { key: 'fazendaScore',     label: 'Dados da Fazenda',    weight: '60%', desc: 'Produção, receitas, custos, eficiência e atividades registradas no SmartAgroOS e AgroCore' },
+  { key: 'behaviorScore',    label: 'Análise de Perfil',   weight: '20%', desc: 'Regularidade financeira, histórico de lançamentos e consistência operacional' },
+  { key: 'operationalScore', label: 'Documentação',        weight: '10%', desc: 'CCIR, ITR, CAR, DAP e demais documentos obrigatórios para crédito rural' },
 ]
 
 const ELIGIBLE_LINES = [
@@ -73,8 +72,10 @@ export default function RelatorioPage() {
 
   const today = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
   const catMeta = scoreData ? (CATEGORY_META[scoreData.category] ?? CATEGORY_META.REGULAR) : null
-  const eligible = scoreData ? ELIGIBLE_LINES.filter(l => l.minScore <= scoreData.score) : []
   const recs = scoreData ? (RECOMMENDATIONS[scoreData.category] ?? RECOMMENDATIONS.REGULAR) : []
+  const fazendaScore = scoreData
+    ? Math.round((scoreData.productionScore * 35 + scoreData.efficiencyScore * 25) / 60)
+    : 0
 
   if (loading) {
     return (
@@ -94,9 +95,9 @@ export default function RelatorioPage() {
           <div className="text-4xl mb-3">📄</div>
           <div className="font-bold text-amber-800 mb-2">Score não calculado</div>
           <p className="text-amber-700 text-sm">Registre sua propriedade e receitas no AgroOS para gerar seu relatório.</p>
-          <a href="https://agros-os.vercel.app" target="_blank" rel="noopener noreferrer"
+          <a href="https://agroos.site" target="_blank" rel="noopener noreferrer"
             className="inline-block mt-4 px-6 py-2 bg-[#065f46] text-white rounded-xl text-sm font-semibold">
-            Acessar AgroOS →
+            Acessar SmartAgroOS →
           </a>
         </div>
       </div>
@@ -129,17 +130,17 @@ export default function RelatorioPage() {
 
       <div ref={reportRef} className="space-y-5">
         {/* Header do relatório */}
-        <div className="bg-[#065f46] rounded-2xl p-6 text-white print:rounded-none">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-sm font-bold opacity-60 uppercase tracking-widest mb-1">Relatório de Score de Crédito Rural</div>
-              <div className="text-2xl font-black mb-1">{userName}</div>
-              <div className="text-sm opacity-70">Gerado em {today} · AgroRate v1.0</div>
-              <div className="text-xs opacity-50 mt-1">Parte do ecossistema AgroOS · AgroCore · AgroRate</div>
+        <div className="bg-[#065f46] rounded-2xl p-5 sm:p-6 text-white print:rounded-none">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold opacity-60 uppercase tracking-widest mb-1">Relatório de Score de Crédito Rural</div>
+              <div className="text-xl sm:text-2xl font-black mb-1 truncate">{userName}</div>
+              <div className="text-xs sm:text-sm opacity-70">Gerado em {today} · AgroRate v1.0</div>
+              <div className="text-xs opacity-50 mt-1 hidden sm:block">Parte do ecossistema SmartAgroOS · AgroCore · AgroRate</div>
             </div>
-            <div className="text-right">
-              <div className="text-7xl font-black leading-none">{scoreData.score}</div>
-              <div className={`inline-block text-sm font-bold px-3 py-1 rounded-xl mt-2 ${catMeta?.bg} text-slate-800`}>
+            <div className="text-right flex-shrink-0">
+              <div className="text-5xl sm:text-7xl font-black leading-none">{scoreData.score}</div>
+              <div className={`inline-block text-xs sm:text-sm font-bold px-2.5 py-1 rounded-xl mt-2 ${catMeta?.bg} text-slate-800`}>
                 {catMeta?.label}
               </div>
             </div>
@@ -153,9 +154,9 @@ export default function RelatorioPage() {
             <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 bg-white border-4 border-[#065f46] rounded-full shadow-lg transition-all"
               style={{ left: `${(scoreData.score / 1000) * 100}%` }}/>
           </div>
-          <div className="flex justify-between text-xs text-slate-400">
+          <div className="flex justify-between text-[10px] sm:text-xs text-slate-400">
             {['Crítico', 'Baixo', 'Regular', 'Bom', 'Alto', 'Elite'].map(l => (
-              <span key={l}>{l}</span>
+              <span key={l} className="truncate text-center">{l}</span>
             ))}
           </div>
         </div>
@@ -165,16 +166,18 @@ export default function RelatorioPage() {
           <div className="font-bold text-slate-900 mb-5 text-sm uppercase tracking-wider">Análise por Dimensão</div>
           <div className="space-y-4">
             {DIMENSIONS.map(dim => {
-              const val = scoreData[dim.key as keyof ScoreData] as number
-              const pct = Math.round(val)
+              const val = dim.key === 'fazendaScore'
+                ? fazendaScore
+                : scoreData[dim.key as keyof ScoreData] as number
+              const pct = Math.round((val / 1000) * 100)
               return (
                 <div key={dim.key}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div>
+                  <div className="flex items-center justify-between mb-1.5 gap-2">
+                    <div className="min-w-0">
                       <span className="font-semibold text-slate-800 text-sm">{dim.label}</span>
                       <span className="ml-2 text-xs text-slate-400">peso {dim.weight}</span>
                     </div>
-                    <span className="font-bold text-slate-900 text-sm">{val}/100</span>
+                    <span className="font-bold text-slate-900 text-sm flex-shrink-0">{val}/1000</span>
                   </div>
                   <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-700"
@@ -183,7 +186,7 @@ export default function RelatorioPage() {
                         background: pct >= 75 ? '#065f46' : pct >= 50 ? '#0284c7' : pct >= 35 ? '#d97706' : '#dc2626'
                       }}/>
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">{dim.desc}</div>
+                  <div className="text-xs text-slate-400 mt-1 hidden sm:block">{dim.desc}</div>
                 </div>
               )
             })}
@@ -197,18 +200,18 @@ export default function RelatorioPage() {
             {ELIGIBLE_LINES.map(line => {
               const ok = line.minScore <= scoreData.score
               return (
-                <div key={line.name} className={`flex items-center gap-4 p-3 rounded-xl ${ok ? 'bg-emerald-50' : 'bg-slate-50 opacity-50'}`}>
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${ok ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                <div key={line.name} className={`flex items-start sm:items-center gap-3 p-3 rounded-xl ${ok ? 'bg-emerald-50' : 'bg-slate-50 opacity-50'}`}>
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 sm:mt-0 ${ok ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                     {ok
                       ? <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
                       : <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     }
                   </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-slate-800 text-sm">{line.name}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-slate-800 text-sm leading-tight">{line.name}</div>
                     <div className="text-xs text-slate-500">{line.institution}</div>
                   </div>
-                  <div className="text-right text-xs">
+                  <div className="text-right text-xs flex-shrink-0">
                     <div className="font-semibold text-slate-700">{line.rate}</div>
                     <div className="text-slate-400">até {line.max}</div>
                   </div>

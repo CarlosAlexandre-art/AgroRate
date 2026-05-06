@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAgrocoreData, calcAgrocoreBonus } from '@/lib/prisma-agrocore'
 
-const WEIGHTS = { production: 0.30, efficiency: 0.25, behavior: 0.25, operational: 0.20 }
+// 60% fazenda (AgroOS+AgroCore), 20% perfil, 10% documentação, 10% bônus externos
+const WEIGHTS = { production: 0.35, efficiency: 0.25, behavior: 0.20, operational: 0.10 }
 
 async function calcProduction(propertyId: string) {
   const property = await prisma.property.findUnique({

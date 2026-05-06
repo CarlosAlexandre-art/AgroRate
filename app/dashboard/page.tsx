@@ -67,11 +67,11 @@ function MiniBar({ score, icon, label, weight, hex }: { score: number; icon: str
 
 function getTips(d: ScoreData) {
   const tips: { icon: string; text: string; action: string; hi: boolean }[] = []
-  if (d.productionScore < 600)  tips.push({ icon: '🌾', text: 'Registre receitas das culturas no AgroOS para aumentar Produção', action: 'Ir ao AgroOS', hi: true })
-  if (d.efficiencyScore < 600)  tips.push({ icon: '💰', text: 'Reduza custos ou aumente receita para melhorar a Eficiência', action: 'Ver dicas', hi: true })
-  if (d.behaviorScore < 600)    tips.push({ icon: '📋', text: 'Lance custos todo mês — consistência melhora Comportamento', action: 'Entender', hi: false })
-  if (d.operationalScore < 600) tips.push({ icon: '⚙️', text: 'Cadastre talhões e membros da equipe para subir Operacional', action: 'Configurar', hi: false })
-  if (d.dataCompleteness < 80)  tips.push({ icon: '📊', text: 'Complete o perfil da propriedade (talhões, culturas, equipe)', action: 'Completar', hi: false })
+  const fazendaScore = Math.round((d.productionScore * 35 + d.efficiencyScore * 25) / 60)
+  if (fazendaScore < 600)       tips.push({ icon: '🌾', text: 'Registre receitas e custos no SmartAgroOS para aumentar sua nota de Fazenda (60% do score)', action: 'Ir ao AgroOS', hi: true })
+  if (d.behaviorScore < 600)    tips.push({ icon: '👤', text: 'Lance custos todo mês — consistência melhora sua Análise de Perfil (20% do score)', action: 'Entender', hi: true })
+  if (d.operationalScore < 600) tips.push({ icon: '📄', text: 'Envie documentos obrigatórios (CCIR, CAR, ITR) para melhorar Documentação (10% do score)', action: 'Ver docs', hi: false })
+  if (d.dataCompleteness < 80)  tips.push({ icon: '📊', text: 'Complete o perfil da propriedade (talhões, culturas, equipe) no SmartAgroOS', action: 'Completar', hi: false })
   if (tips.length === 0)        tips.push({ icon: '🏆', text: 'Parabéns! Continue registrando dados para manter o score alto', action: 'Ver crédito', hi: false })
   return tips.slice(0, 3)
 }
@@ -220,10 +220,9 @@ export default function DashboardPage() {
         {/* Composição */}
         <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm space-y-3">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Composição</div>
-          <MiniBar score={data.productionScore}  icon="🌾" label="Produção"     weight={30} hex="#065f46"/>
-          <MiniBar score={data.efficiencyScore}  icon="💰" label="Eficiência"   weight={25} hex="#0d9488"/>
-          <MiniBar score={data.behaviorScore}    icon="📋" label="Comportamento" weight={25} hex="#7c3aed"/>
-          <MiniBar score={data.operationalScore} icon="⚙️" label="Operacional"  weight={20} hex="#d97706"/>
+          <MiniBar score={Math.round((data.productionScore * 35 + data.efficiencyScore * 25) / 60)} icon="🌾" label="Fazenda (AgroOS + AgroCore)" weight={60} hex="#065f46"/>
+          <MiniBar score={data.behaviorScore}    icon="👤" label="Análise de Perfil" weight={20} hex="#7c3aed"/>
+          <MiniBar score={data.operationalScore} icon="📄" label="Documentação"      weight={10} hex="#d97706"/>
           <p className="text-[10px] text-slate-300 pt-1 border-t border-slate-50">Atualizado em {new Date(data.lastCalculated).toLocaleDateString('pt-BR')}</p>
         </div>
 
