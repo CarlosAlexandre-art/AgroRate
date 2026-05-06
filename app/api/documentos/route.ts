@@ -56,6 +56,9 @@ export async function POST(req: NextRequest) {
   const bytes = await file.arrayBuffer()
   const admin = createAdminClient()
 
+  // Garante que o bucket existe
+  await admin.storage.createBucket('documents', { public: true }).catch(() => null)
+
   const { error: uploadError } = await admin.storage
     .from('documents')
     .upload(path, bytes, { contentType: file.type, upsert: false })

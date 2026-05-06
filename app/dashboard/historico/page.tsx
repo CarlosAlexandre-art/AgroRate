@@ -117,7 +117,7 @@ export default function HistoricoPage() {
         }
       `}</style>
 
-      <div id="print-area" ref={printRef} className="p-5 max-w-4xl mx-auto space-y-4">
+      <div id="print-area" ref={printRef} className="p-4 sm:p-5 max-w-4xl mx-auto space-y-4">
 
         {/* Header de impressão (oculto na tela) */}
         <div className="hidden print:block mb-4">
@@ -126,25 +126,25 @@ export default function HistoricoPage() {
         </div>
 
         {/* Resumo */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm text-center">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Score atual</div>
-            <div className="text-4xl font-black" style={{ color: SCORE_COLOR(currentScore) }}>{currentScore}</div>
-            <div className="text-sm font-semibold mt-1" style={{ color: SCORE_COLOR(currentScore) }}>{SCORE_LABEL(currentScore)}</div>
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="bg-white rounded-2xl border border-slate-100 p-3 sm:p-5 shadow-sm text-center">
+            <div className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Score atual</div>
+            <div className="text-2xl sm:text-4xl font-black tabular-nums" style={{ color: SCORE_COLOR(currentScore) }}>{currentScore}</div>
+            <div className="text-xs sm:text-sm font-semibold mt-1" style={{ color: SCORE_COLOR(currentScore) }}>{SCORE_LABEL(currentScore)}</div>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm text-center">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Evolução</div>
-            <div className={`text-4xl font-black ${gain >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+          <div className="bg-white rounded-2xl border border-slate-100 p-3 sm:p-5 shadow-sm text-center">
+            <div className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Evolução</div>
+            <div className={`text-2xl sm:text-4xl font-black tabular-nums ${gain >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               {gain >= 0 ? '+' : ''}{gain}
             </div>
-            <div className="text-sm text-slate-400 mt-1">
+            <div className="text-[10px] sm:text-sm text-slate-400 mt-1 leading-tight">
               {trendHistory.length >= 2 ? `desde ${trendHistory[0].month}` : 'pontos ganhos'}
             </div>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm text-center">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Score inicial</div>
-            <div className="text-4xl font-black text-slate-400">{trendHistory[0]?.score ?? currentScore}</div>
-            <div className="text-sm text-slate-400 mt-1">{trendHistory[0]?.month ?? 'Hoje'}</div>
+          <div className="bg-white rounded-2xl border border-slate-100 p-3 sm:p-5 shadow-sm text-center">
+            <div className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Score inicial</div>
+            <div className="text-2xl sm:text-4xl font-black text-slate-400 tabular-nums">{trendHistory[0]?.score ?? currentScore}</div>
+            <div className="text-[10px] sm:text-sm text-slate-400 mt-1">{trendHistory[0]?.month ?? 'Hoje'}</div>
           </div>
         </div>
 

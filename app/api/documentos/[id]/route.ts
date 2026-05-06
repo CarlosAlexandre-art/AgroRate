@@ -45,6 +45,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const oldPath = oldUrl.pathname.split('/documents/')[1]
     if (oldPath) await admin.storage.from('documents').remove([oldPath])
 
+    // Garante que o bucket existe
+    await admin.storage.createBucket('documents', { public: true }).catch(() => null)
+
     const ext = file.name.split('.').pop()
     const path = `${user.id}/${doc.propertyId}/${Date.now()}.${ext}`
     const bytes = await file.arrayBuffer()

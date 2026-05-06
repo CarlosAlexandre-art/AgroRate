@@ -37,11 +37,14 @@ export async function POST(req: NextRequest) {
       } catch { /* ignora se URL inválida */ }
     }
 
+    // Garante que o bucket existe
+    await admin.storage.createBucket('avatares', { public: true }).catch(() => null)
+
     const { error: uploadError } = await admin.storage
       .from('avatares')
       .upload(path, bytes, { contentType: file.type, upsert: true })
 
-    if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
+    if (uploadError) return NextResponse.json({ error: `Erro ao enviar imagem: ${uploadError.message}` }, { status: 500 })
 
     const { data: { publicUrl } } = admin.storage.from('avatares').getPublicUrl(path)
 

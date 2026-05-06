@@ -105,7 +105,7 @@ export default function RelatorioPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-5 print:p-0 print:space-y-4">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-5 print:p-0 print:space-y-4">
       {/* Toolbar (não aparece no print) */}
       <div className="flex items-center gap-4 print:hidden">
         <Link href="/dashboard" className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -130,17 +130,17 @@ export default function RelatorioPage() {
 
       <div ref={reportRef} className="space-y-5">
         {/* Header do relatório */}
-        <div className="bg-[#065f46] rounded-2xl p-5 sm:p-6 text-white print:rounded-none">
-          <div className="flex items-start justify-between gap-4">
+        <div className="bg-[#065f46] rounded-2xl p-4 sm:p-6 text-white print:rounded-none">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold opacity-60 uppercase tracking-widest mb-1">Relatório de Score de Crédito Rural</div>
-              <div className="text-xl sm:text-2xl font-black mb-1 truncate">{userName}</div>
-              <div className="text-xs sm:text-sm opacity-70">Gerado em {today} · AgroRate v1.0</div>
+              <div className="text-[10px] sm:text-xs font-bold opacity-60 uppercase tracking-widest mb-1">Relatório de Score de Crédito Rural</div>
+              <div className="text-lg sm:text-2xl font-black mb-1 truncate">{userName}</div>
+              <div className="text-xs opacity-70">Gerado em {today} · AgroRate v1.0</div>
               <div className="text-xs opacity-50 mt-1 hidden sm:block">Parte do ecossistema SmartAgroOS · AgroCore · AgroRate</div>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="text-5xl sm:text-7xl font-black leading-none">{scoreData.score}</div>
-              <div className={`inline-block text-xs sm:text-sm font-bold px-2.5 py-1 rounded-xl mt-2 ${catMeta?.bg} text-slate-800`}>
+              <div className="text-4xl sm:text-7xl font-black leading-none tabular-nums">{scoreData.score}</div>
+              <div className={`inline-block text-xs font-bold px-2.5 py-1 rounded-xl mt-2 ${catMeta?.bg} text-slate-800`}>
                 {catMeta?.label}
               </div>
             </div>
@@ -238,16 +238,16 @@ export default function RelatorioPage() {
         {/* Dados financeiros */}
         <div className="bg-white rounded-2xl border border-slate-100 p-6">
           <div className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">Dados Financeiros (via AgroOS)</div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-slate-50 rounded-xl">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="p-3 sm:p-4 bg-slate-50 rounded-xl overflow-hidden">
               <div className="text-xs text-slate-500 mb-1">Receita total registrada</div>
-              <div className="text-xl font-black text-slate-900">
+              <div className="text-base sm:text-xl font-black text-slate-900 truncate tabular-nums">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(scoreData.totalRevenue)}
               </div>
             </div>
-            <div className="p-4 bg-slate-50 rounded-xl">
+            <div className="p-3 sm:p-4 bg-slate-50 rounded-xl overflow-hidden">
               <div className="text-xs text-slate-500 mb-1">Margem operacional</div>
-              <div className="text-xl font-black text-[#065f46]">
+              <div className="text-base sm:text-xl font-black text-[#065f46] tabular-nums">
                 {(scoreData.marginRate * 100).toFixed(1)}%
               </div>
             </div>
