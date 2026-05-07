@@ -10,11 +10,15 @@ export async function GET() {
   const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id }, select: { id: true } })
   if (!dbUser) return NextResponse.json([])
 
-  const consents = await prisma.bankConsent.findMany({
-    where: { userId: dbUser.id },
-    select: { institution: true, active: true, grantedAt: true },
-  })
-  return NextResponse.json(consents)
+  try {
+    const consents = await prisma.bankConsent.findMany({
+      where: { userId: dbUser.id },
+      select: { institution: true, active: true, grantedAt: true },
+    })
+    return NextResponse.json(consents)
+  } catch {
+    return NextResponse.json([])
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -30,20 +34,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
   }
 
-  const consent = await prisma.bankConsent.upsert({
-    where: { userId_institution: { userId: dbUser.id, institution } },
-    create: {
-      userId: dbUser.id,
-      institution,
-      active,
-      grantedAt: active ? new Date() : null,
-      revokedAt: active ? null : new Date(),
-    },
-    update: {
-      active,
-      grantedAt: active ? new Date() : undefined,
-      revokedAt: active ? null : new Date(),
-    },
-  })
-  return NextResponse.json(consent)
+  try {
+    const consent = await prisma.bankConsent.upsert({
+      where: { userId_institution: { userId: dbUser.id, institution } },
+      create: {
+        userId: dbUser.id,
+        institution,
+        active,
+        grantedAt: active ? new Date() : null,
+        revokedAt: active ? null : new Date(),
+      },
+      update: {
+        active,
+        grantedAt: active ? new Date() : undefined,
+        revokedAt: active ? null : new Date(),
+      },
+    })
+    return NextResponse.json(consent)
+  } catch {
+    return NextResponse.json({ error: 'Tabela não encontrada — rode prisma db push' }, { status: 503 })
+  }
 }
