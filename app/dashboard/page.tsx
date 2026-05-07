@@ -68,7 +68,7 @@ function MiniBar({ score, icon, label, weight, hex }: { score: number; icon: str
 function getTips(d: ScoreData) {
   const tips: { icon: string; text: string; action: string; hi: boolean }[] = []
   const fazendaScore = Math.round((d.productionScore * 35 + d.efficiencyScore * 25) / 60)
-  if (fazendaScore < 600)       tips.push({ icon: '🌾', text: 'Registre receitas e custos no SmartAgroOS para aumentar sua nota de Fazenda (60% do score)', action: 'Ir ao AgroOS', hi: true })
+  if (fazendaScore < 600)       tips.push({ icon: '🌾', text: 'Registre receitas e custos no SmartAgroOS para aumentar sua nota de Fazenda (60% do score)', action: 'Ir ao SmartAgroOS', hi: true })
   if (d.behaviorScore < 600)    tips.push({ icon: '👤', text: 'Lance custos todo mês — consistência melhora sua Análise de Perfil (20% do score)', action: 'Entender', hi: true })
   if (d.operationalScore < 600) tips.push({ icon: '📄', text: 'Envie documentos obrigatórios (CCIR, CAR, ITR) para melhorar Documentação (10% do score)', action: 'Ver docs', hi: false })
   if (d.dataCompleteness < 80)  tips.push({ icon: '📊', text: 'Complete o perfil da propriedade (talhões, culturas, equipe) no SmartAgroOS', action: 'Completar', hi: false })
@@ -138,14 +138,14 @@ export default function DashboardPage() {
           <div>
             <h2 className="text-xl font-bold text-slate-800 mb-1">Configure sua fazenda para gerar o score</h2>
             <p className="text-slate-500 text-sm leading-relaxed">
-              Seu score AgroRate é calculado automaticamente com base nos dados da sua propriedade no AgroOS. Siga os 3 passos abaixo para começar.
+              Seu score AgroRate é calculado automaticamente com base nos dados da sua propriedade no SmartAgroOS. Siga os 3 passos abaixo para começar.
             </p>
           </div>
         </div>
 
         <div className="space-y-3">
           {[
-            { step: '01', icon: '🖥️', title: 'Acesse o AgroOS', desc: 'Entre em agros-os.vercel.app com o mesmo e-mail e senha do AgroRate. É a mesma conta.', href: 'https://agros-os.vercel.app', action: 'Abrir AgroOS' },
+            { step: '01', icon: '🖥️', title: 'Acesse o SmartAgroOS', desc: 'Entre em agros-os.vercel.app com o mesmo e-mail e senha do AgroRate. É a mesma conta.', href: 'https://agros-os.vercel.app', action: 'Abrir SmartAgroOS' },
             { step: '02', icon: '🏡', title: 'Cadastre sua propriedade', desc: 'Crie uma propriedade, adicione os talhões (áreas de cultivo) e registre os membros da equipe.', href: null, action: null },
             { step: '03', icon: '💰', title: 'Registre receitas e custos', desc: 'Adicione pelo menos uma receita de colheita e seus custos operacionais. O score é calculado automaticamente em segundos.', href: null, action: null },
           ].map((s, i) => (
@@ -175,7 +175,7 @@ export default function DashboardPage() {
       <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3">
         <span className="text-xl flex-shrink-0">💡</span>
         <div>
-          <div className="font-semibold text-blue-800 text-sm mb-0.5">Já tem dados no AgroOS?</div>
+          <div className="font-semibold text-blue-800 text-sm mb-0.5">Já tem dados no SmartAgroOS?</div>
           <p className="text-xs text-blue-700 leading-relaxed">
             Se você já cadastrou sua propriedade e tem receitas registradas, o score pode levar até 1 minuto para carregar. Recarregue a página após alguns instantes.
           </p>
@@ -220,7 +220,7 @@ export default function DashboardPage() {
         {/* Composição */}
         <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm space-y-3">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Composição</div>
-          <MiniBar score={Math.round((data.productionScore * 35 + data.efficiencyScore * 25) / 60)} icon="🌾" label="Fazenda (AgroOS + AgroCore)" weight={60} hex="#065f46"/>
+          <MiniBar score={Math.round((data.productionScore * 35 + data.efficiencyScore * 25) / 60)} icon="🌾" label="Fazenda (SmartAgroOS + AgroCore)" weight={60} hex="#065f46"/>
           <MiniBar score={data.behaviorScore}    icon="👤" label="Análise de Perfil" weight={20} hex="#7c3aed"/>
           <MiniBar score={data.operationalScore} icon="📄" label="Documentação"      weight={10} hex="#d97706"/>
           <p className="text-[10px] text-slate-300 pt-1 border-t border-slate-50">Atualizado em {new Date(data.lastCalculated).toLocaleDateString('pt-BR')}</p>

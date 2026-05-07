@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAgrocoreData, calcAgrocoreBonus } from '@/lib/prisma-agrocore'
 
-// 60% fazenda (AgroOS+AgroCore), 20% perfil, 10% documentação, 10% bônus externos
+// 60% fazenda (SmartAgroOS+AgroCore), 20% perfil, 10% documentação, 10% bônus externos
 const WEIGHTS = { production: 0.35, efficiency: 0.25, behavior: 0.20, operational: 0.10 }
 
 async function calcProduction(propertyId: string) {
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
         include: { properties: { take: 1 } },
       })
       if (!user || user.properties.length === 0) {
-        return NextResponse.json({ error: 'Nenhuma propriedade encontrada. Configure sua fazenda no AgroOS.' }, { status: 404 })
+        return NextResponse.json({ error: 'Nenhuma propriedade encontrada. Configure sua fazenda no SmartAgroOS.' }, { status: 404 })
       }
       targetPropertyId = user.properties[0].id
     }

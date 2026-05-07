@@ -38,8 +38,8 @@ const ELIGIBLE_LINES = [
 const RECOMMENDATIONS: Record<string, string[]> = {
   ELITE:    ['Negocie taxas personalizadas com gerentes', 'Acesse Moderinfra e PCA para grandes investimentos', 'Explore CPR Digital para liquidez imediata'],
   HIGH:     ['Solicite revisão de limite no Pronamp', 'Formalize documentação para Moderinfra', 'Mantenha pagamentos em dia para manter o score'],
-  GOOD:     ['Registre todos os custos no AgroOS para subir eficiência', 'Renove CAR e ITR antes do vencimento', 'Solicite Pronamp com score atual'],
-  REGULAR:  ['Prioridade: regularizar documentos vencidos', 'Registre safras anteriores no AgroOS', 'Considere Pronaf enquanto reconstrói score'],
+  GOOD:     ['Registre todos os custos no SmartAgroOS para subir eficiência', 'Renove CAR e ITR antes do vencimento', 'Solicite Pronamp com score atual'],
+  REGULAR:  ['Prioridade: regularizar documentos vencidos', 'Registre safras anteriores no SmartAgroOS', 'Considere Pronaf enquanto reconstrói score'],
   LOW:      ['Regularize pendências ambientais (CAR)', 'Comece com microcrédito (Pronaf B)', 'Use a IA para um plano de recuperação'],
   CRITICAL: ['Entre em contato com a equipe AgroRate', 'Foco em regularização fundiária', 'Evite solicitar crédito agora — reconstrua o score'],
 }
@@ -94,7 +94,7 @@ export default function RelatorioPage() {
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
           <div className="text-4xl mb-3">📄</div>
           <div className="font-bold text-amber-800 mb-2">Score não calculado</div>
-          <p className="text-amber-700 text-sm">Registre sua propriedade e receitas no AgroOS para gerar seu relatório.</p>
+          <p className="text-amber-700 text-sm">Registre sua propriedade e receitas no SmartAgroOS para gerar seu relatório.</p>
           <a href="https://agroos.site" target="_blank" rel="noopener noreferrer"
             className="inline-block mt-4 px-6 py-2 bg-[#065f46] text-white rounded-xl text-sm font-semibold">
             Acessar SmartAgroOS →
@@ -237,7 +237,7 @@ export default function RelatorioPage() {
 
         {/* Dados financeiros */}
         <div className="bg-white rounded-2xl border border-slate-100 p-6">
-          <div className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">Dados Financeiros (via AgroOS)</div>
+          <div className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">Dados Financeiros (via SmartAgroOS)</div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div className="p-3 sm:p-4 bg-slate-50 rounded-xl overflow-hidden">
               <div className="text-xs text-slate-500 mb-1">Receita total registrada</div>
@@ -256,7 +256,7 @@ export default function RelatorioPage() {
 
         {/* Rodapé */}
         <div className="text-center text-xs text-slate-300 py-4 border-t border-slate-100">
-          AgroRate · Score calculado com base em dados do AgroOS · Relatório gerado em {today}
+          AgroRate · Score calculado com base em dados do SmartAgroOS · Relatório gerado em {today}
           <br/>Este documento é informativo. Aprovações de crédito são de responsabilidade das instituições financeiras.
         </div>
       </div>

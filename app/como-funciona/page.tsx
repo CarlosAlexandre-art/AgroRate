@@ -6,9 +6,9 @@ const STEPS = [
     step: '01',
     icon: '🌾',
     title: 'Conecte sua fazenda',
-    desc: 'Importe os dados do AgroOS ou cadastre sua propriedade diretamente no AgroRate. Produção, custos, atividades e equipe alimentam o algoritmo de forma automática.',
+    desc: 'Importe os dados do SmartAgroOS ou cadastre sua propriedade diretamente no AgroRate. Produção, custos, atividades e equipe alimentam o algoritmo de forma automática.',
     details: [
-      'Integração automática com AgroOS — sem retrabalho',
+      'Integração automática com SmartAgroOS — sem retrabalho',
       'Cadastro manual para quem está começando',
       'Propriedade, talhões, culturas e equipe',
       'Dados históricos dos últimos 12 meses',
@@ -49,8 +49,8 @@ const STEPS = [
 const FAQ = [
   { q: 'Preciso pagar para usar o AgroRate?', a: 'Não. O cálculo do score e a visualização do dashboard são gratuitos. A plataforma é sustentada por comissões das instituições financeiras parceiras quando o crédito é contratado.' },
   { q: 'Meus dados ficam seguros?', a: 'Sim. Seguimos a LGPD (Lei Geral de Proteção de Dados). Seus dados são enviados a parceiros financeiros somente com seu consentimento expresso.' },
-  { q: 'Já uso AgroOS. Preciso recadastrar tudo?', a: 'Não. O AgroRate usa o mesmo banco de dados e login do AgroOS. Sua propriedade e dados já estão lá — o score é calculado automaticamente.' },
-  { q: 'Com que frequência o score atualiza?', a: 'O score é recalculado a cada 7 dias ou sempre que você solicitar manualmente. Quanto mais dados você registrar no AgroOS, mais preciso e alto tende a ser seu score.' },
+  { q: 'Já uso SmartAgroOS. Preciso recadastrar tudo?', a: 'Não. O AgroRate usa o mesmo banco de dados e login do SmartAgroOS. Sua propriedade e dados já estão lá — o score é calculado automaticamente.' },
+  { q: 'Com que frequência o score atualiza?', a: 'O score é recalculado a cada 7 dias ou sempre que você solicitar manualmente. Quanto mais dados você registrar no SmartAgroOS, mais preciso e alto tende a ser seu score.' },
   { q: 'O AgroRate substitui análise de crédito bancária?', a: 'Não substitui — complementa. O score AgroRate é enviado ao banco junto com seu perfil e acelera drasticamente a análise, que seria feita de forma manual e demorada.' },
 ]
 

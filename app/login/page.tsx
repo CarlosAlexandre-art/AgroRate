@@ -51,13 +51,13 @@ export default function LoginPage() {
           <p className="text-emerald-200 text-sm">Entre para ver seu score de crédito rural</p>
         </div>
 
-        {/* Banner AgroOS integrado */}
+        {/* Banner SmartAgroOS integrado */}
         <div className="bg-white/10 border border-white/20 rounded-2xl px-4 py-3 mb-4 flex items-start gap-3">
           <div className="text-2xl flex-shrink-0">🔗</div>
           <div>
-            <div className="text-white font-semibold text-sm leading-snug">Já usa o AgroOS?</div>
+            <div className="text-white font-semibold text-sm leading-snug">Já usa o SmartAgroOS?</div>
             <div className="text-emerald-200 text-xs mt-0.5 leading-relaxed">
-              Use exatamente o mesmo e-mail e senha do AgroOS aqui. Os dois sistemas compartilham a mesma conta — sem novo cadastro.
+              Use exatamente o mesmo e-mail e senha do SmartAgroOS aqui. Os dois sistemas compartilham a mesma conta — sem novo cadastro.
             </div>
           </div>
         </div>
@@ -96,7 +96,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#065f46] text-white font-bold py-3.5 rounded-xl hover:bg-[#047857] disabled:opacity-50 transition-all shadow-lg hover:-translate-y-0.5 hover:shadow-emerald-900/30"
+              className="btn-primary w-full bg-[#065f46] text-white font-bold py-3.5 rounded-xl hover:bg-[#047857] disabled:opacity-50 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/30 hover:shadow-xl"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -129,7 +129,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-emerald-300/70 mt-6">
-          Parte do ecossistema AgroCore · AgroOS · AgroRate
+          Parte do ecossistema AgroCore · SmartAgroOS · AgroRate
         </p>
       </div>
     </div>

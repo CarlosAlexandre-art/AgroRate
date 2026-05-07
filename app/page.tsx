@@ -33,11 +33,11 @@ const FEATURES = [
   { icon: '🤖', title: 'Conselheiro IA', desc: 'Inteligência artificial que analisa seu perfil e recomenda o caminho mais rápido para melhorar o score.', color: 'bg-violet-50', iconBg: 'bg-violet-100' },
   { icon: '📈', title: 'Histórico de evolução', desc: 'Acompanhe mês a mês como seu score cresce conforme você registra dados da fazenda.', color: 'bg-amber-50', iconBg: 'bg-amber-100' },
   { icon: '🏦', title: 'Parceiros financeiros', desc: 'Sicredi, Banco do Brasil, Sicoob, Bradesco e fintechs especializadas no agro.', color: 'bg-teal-50', iconBg: 'bg-teal-100' },
-  { icon: '🔗', title: 'Ecossistema integrado', desc: 'Dados do AgroOS (gestão) e AgroCore (execução) alimentam automaticamente seu score.', color: 'bg-rose-50', iconBg: 'bg-rose-100' },
+  { icon: '🔗', title: 'Ecossistema integrado', desc: 'Dados do SmartAgroOS (gestão) e AgroCore (execução) alimentam automaticamente seu score.', color: 'bg-rose-50', iconBg: 'bg-rose-100' },
 ]
 
 const STEPS = [
-  { step: '01', icon: '🌾', title: 'Conecte sua fazenda', desc: 'Importe os dados do AgroOS ou cadastre sua propriedade. Produção, custos e atividades alimentam o score.' },
+  { step: '01', icon: '🌾', title: 'Conecte sua fazenda', desc: 'Importe os dados do SmartAgroOS ou cadastre sua propriedade. Produção, custos e atividades alimentam o score.' },
   { step: '02', icon: '🤖', title: 'IA calcula seu AgroRate', desc: 'Nosso algoritmo analisa 4 dimensões: produção, eficiência, comportamento financeiro e operacional. Score de 0 a 1000.' },
   { step: '03', icon: '💳', title: 'Acesse crédito real', desc: 'Com seu score, bancos e cooperativas fazem ofertas personalizadas. Compare e escolha o melhor em segundos.' },
 ]
@@ -97,7 +97,7 @@ export default function Home() {
 
           <div className="anim-fade-up opacity-0 anim-d4 flex flex-col sm:flex-row gap-4 justify-center mb-16">
             <Link href="/cadastro"
-              className="inline-flex items-center justify-center bg-[#065f46] text-white font-bold text-base px-8 py-4 rounded-2xl hover:bg-[#047857] transition-all shadow-xl shadow-emerald-900/20 hover:shadow-emerald-900/30 hover:-translate-y-1 hover:scale-[1.02]">
+              className="btn-primary inline-flex items-center justify-center bg-[#065f46] text-white font-bold text-base px-8 py-4 rounded-2xl hover:bg-[#047857] shadow-xl shadow-emerald-900/20 hover:shadow-emerald-900/30 hover:-translate-y-1 hover:scale-[1.02]">
               Calcular meu score grátis
             </Link>
             <Link href="/como-funciona"
@@ -348,7 +348,7 @@ export default function Home() {
                   </div>
                   <h2 className="text-4xl font-bold text-white mb-4">Três sistemas.<br />Uma plataforma.</h2>
                   <p className="text-slate-400 leading-relaxed mb-8">
-                    O AgroCore executa serviços. O AgroOS controla a operação. O AgroRate transforma tudo isso em crédito. Juntos, formam a infraestrutura digital completa da fazenda moderna.
+                    O AgroCore executa serviços. O SmartAgroOS controla a operação. O AgroRate transforma tudo isso em crédito. Juntos, formam a infraestrutura digital completa da fazenda moderna.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <a href="https://agrolink-opal.vercel.app" target="_blank" rel="noopener noreferrer"
@@ -357,14 +357,14 @@ export default function Home() {
                     </a>
                     <a href="https://agros-os.vercel.app" target="_blank" rel="noopener noreferrer"
                       className="inline-flex items-center justify-center gap-2 bg-white/10 text-white font-semibold px-5 py-3 rounded-xl hover:bg-white/15 transition-colors text-sm border border-white/10">
-                      Acessar AgroOS
+                      Acessar SmartAgroOS
                     </a>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-3">
                   {[
                     { name: 'AgroCore', role: 'Marketplace de serviços', desc: 'Execução · Prestadores · Serviços · Pagamentos', color: 'bg-amber-500/10 border-amber-500/20 text-amber-400' },
-                    { name: 'AgroOS', role: 'Sistema Operacional', desc: 'Planejamento · Financeiro · Equipe · IA', color: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' },
+                    { name: 'SmartAgroOS', role: 'Sistema Operacional', desc: 'Planejamento · Financeiro · Equipe · IA', color: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' },
                     { name: 'AgroRate', role: 'Score de Crédito Rural', desc: 'Score · Crédito · Parceiros · Fintech', color: 'bg-blue-500/10 border-blue-500/20 text-blue-400', active: true },
                   ].map(s => (
                     <div key={s.name} className={`border rounded-2xl p-4 hover:scale-[1.02] transition-transform ${s.color} ${s.active ? 'ring-2 ring-blue-500/30' : ''}`}>
@@ -398,7 +398,7 @@ export default function Home() {
                   className="inline-flex items-center gap-2 bg-white text-[#065f46] font-bold px-10 py-4 rounded-2xl hover:bg-emerald-50 hover:-translate-y-1 hover:scale-[1.02] transition-all shadow-2xl text-lg">
                   Calcular meu score grátis →
                 </Link>
-                <p className="text-emerald-300 text-xs mt-5">Já usa AgroOS? Use o mesmo login.</p>
+                <p className="text-emerald-300 text-xs mt-5">Já usa SmartAgroOS? Use o mesmo login.</p>
               </div>
             </div>
           </ScrollReveal>
@@ -415,7 +415,7 @@ export default function Home() {
               <Link href="/score" className="hover:text-slate-600 transition-colors">Meu Score</Link>
               <Link href="/parceiros" className="hover:text-slate-600 transition-colors">Parceiros</Link>
               <a href="https://agrolink-opal.vercel.app" target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">AgroCore</a>
-              <a href="https://agros-os.vercel.app" target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">AgroOS</a>
+              <a href="https://agros-os.vercel.app" target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">SmartAgroOS</a>
             </div>
           </div>
           <div className="mt-8 pt-6 border-t border-slate-100 text-center text-xs text-slate-300">

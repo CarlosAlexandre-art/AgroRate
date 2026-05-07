@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
@@ -51,41 +51,89 @@ const PARCEIROS = [
 
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)
 
+type Consent = { institution: string; active: boolean; grantedAt: string | null }
+
 export default function ParceirosPage() {
   const [score, setScore] = useState<number | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [consents, setConsents] = useState<Record<string, boolean>>({})
+  const [toggling, setToggling] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) return
-      const res = await fetch(`/api/agrorate/score?userId=${session.user.id}`)
-      if (res.ok) { const j = await res.json(); setScore(j.score) }
+      const [scoreRes, consentRes] = await Promise.all([
+        fetch(`/api/agrorate/score?userId=${session.user.id}`),
+        fetch('/api/bank-consent'),
+      ])
+      if (scoreRes.ok) { const j = await scoreRes.json(); setScore(j.score) }
+      if (consentRes.ok) {
+        const list: Consent[] = await consentRes.json()
+        const map: Record<string, boolean> = {}
+        list.forEach(c => { map[c.institution] = c.active })
+        setConsents(map)
+      }
     }
     load()
   }, [])
 
+  const toggleConsent = useCallback(async (institution: string, current: boolean) => {
+    setToggling(institution)
+    const newValue = !current
+    setConsents(prev => ({ ...prev, [institution]: newValue }))
+    try {
+      await fetch('/api/bank-consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ institution, active: newValue }),
+      })
+    } catch {
+      setConsents(prev => ({ ...prev, [institution]: current }))
+    }
+    setToggling(null)
+  }, [])
+
+  const activeConsents = Object.values(consents).filter(Boolean).length
+
   return (
-    <div className="p-5 max-w-4xl mx-auto space-y-4">
+    <div className="p-4 sm:p-5 max-w-4xl mx-auto space-y-4">
 
       {/* Header banner */}
-      <div className="bg-gradient-to-r from-[#065f46] to-emerald-600 rounded-2xl p-5 text-white flex items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-[#065f46] to-emerald-600 rounded-2xl p-4 sm:p-5 text-white flex items-center justify-between gap-4">
         <div>
-          <div className="text-sm font-semibold text-emerald-200 mb-0.5">Rede de parceiros financeiros</div>
-          <div className="text-2xl font-black">{PARCEIROS.length} instituições</div>
-          <div className="text-emerald-100 text-sm">aceitam o score AgroRate</div>
+          <div className="text-xs sm:text-sm font-semibold text-emerald-200 mb-0.5">Rede de parceiros financeiros</div>
+          <div className="text-xl sm:text-2xl font-black">{PARCEIROS.length} instituições</div>
+          <div className="text-emerald-100 text-xs sm:text-sm">aceitam o score AgroRate</div>
         </div>
         {score !== null && (
           <div className="text-right flex-shrink-0">
-            <div className="text-4xl font-black">{score}</div>
+            <div className="text-3xl sm:text-4xl font-black tabular-nums">{score}</div>
             <div className="text-emerald-200 text-xs">seu score atual</div>
             <div className="text-emerald-100 text-xs mt-1">
-              {PARCEIROS.filter(p => p.minScore <= score).length} parceiros qualificados
+              {PARCEIROS.filter(p => p.minScore <= score).length} qualificados
             </div>
           </div>
         )}
       </div>
+
+      {/* Banner de consentimentos ativos */}
+      {activeConsents > 0 && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-emerald-800">
+              {activeConsents} {activeConsents === 1 ? 'instituição autorizada' : 'instituições autorizadas'}
+            </div>
+            <div className="text-xs text-emerald-600">Seus dados de score estão sendo compartilhados com estas instituições</div>
+          </div>
+        </div>
+      )}
 
       {/* Parceiros */}
       <div className="space-y-3">
@@ -94,25 +142,25 @@ export default function ParceirosPage() {
           const gap = score !== null ? Math.max(0, p.minScore - score) : null
           const pct = score !== null ? Math.min(100, (score / p.minScore) * 100) : 0
           const isOpen = expanded === p.name
+          const isConsented = consents[p.name] ?? false
+          const isToggling = toggling === p.name
 
           return (
             <div key={p.name} className={`bg-white rounded-2xl border-2 overflow-hidden transition-all ${qualified ? p.color : 'border-slate-100'}`}>
-              <button className="w-full text-left p-5 flex items-center gap-4" onClick={() => setExpanded(isOpen ? null : p.name)}>
-                {/* Status indicator */}
+              <button className="w-full text-left p-4 sm:p-5 flex items-center gap-3 sm:gap-4" onClick={() => setExpanded(isOpen ? null : p.name)}>
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg ${qualified ? p.bg : 'bg-slate-50'}`}>
                   {qualified ? '✅' : '🔒'}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-bold text-slate-900">{p.name}</span>
+                    <span className="font-bold text-slate-900 text-sm sm:text-base">{p.name}</span>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${p.badge}`}>{p.type}</span>
                     {qualified
                       ? <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg">Qualificado ✓</span>
-                      : gap !== null && <span className="text-xs font-semibold text-slate-500">Faltam {gap} pontos</span>
+                      : gap !== null && <span className="text-xs font-semibold text-slate-500">Faltam {gap} pts</span>
                     }
                   </div>
-                  {/* Barra de progresso */}
                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-700"
                       style={{ width: `${pct}%`, background: qualified ? p.hex : '#94a3b8' }}/>
@@ -120,7 +168,7 @@ export default function ParceirosPage() {
                 </div>
 
                 <div className="text-right flex-shrink-0">
-                  <div className="font-black text-xl" style={{ color: p.hex }}>{p.rate}</div>
+                  <div className="font-black text-lg sm:text-xl" style={{ color: p.hex }}>{p.rate}</div>
                   <div className="text-xs text-slate-400">ao mês</div>
                 </div>
 
@@ -131,7 +179,7 @@ export default function ParceirosPage() {
               </button>
 
               {isOpen && (
-                <div className={`px-5 pb-5 border-t border-slate-50 pt-4 ${p.bg}`}>
+                <div className={`px-4 sm:px-5 pb-5 border-t border-slate-50 pt-4 ${p.bg}`}>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-slate-600 leading-relaxed mb-3">{p.desc}</p>
@@ -159,6 +207,26 @@ export default function ParceirosPage() {
                           </div>
                         ))}
                       </div>
+
+                      {/* Botão de consentimento */}
+                      <div className="bg-white/80 border border-slate-200 rounded-xl p-3 mb-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-xs font-semibold text-slate-700">Compartilhar meu score</div>
+                            <div className="text-xs text-slate-500">
+                              {isConsented ? 'Autorizado — dados visíveis para esta instituição' : 'Não autorizado — dados privados'}
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toggleConsent(p.name, isConsented) }}
+                            disabled={isToggling}
+                            className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${isConsented ? 'bg-emerald-500' : 'bg-slate-200'} ${isToggling ? 'opacity-60' : ''}`}
+                          >
+                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isConsented ? 'translate-x-5' : 'translate-x-0'}`}/>
+                          </button>
+                        </div>
+                      </div>
+
                       {qualified
                         ? <Link href="/dashboard/credito"
                             className="flex items-center justify-center gap-1.5 w-full py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition-opacity"

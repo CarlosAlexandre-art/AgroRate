@@ -244,7 +244,7 @@ export default function IAPage() {
             <p className="text-slate-500 text-sm max-w-sm leading-relaxed mb-6">
               {scoreData
                 ? `Olá! Estou analisando seu score de ${scoreData.score} pontos. Pergunte qualquer coisa sobre crédito rural, seu score ou como melhorá-lo.`
-                : 'Configure sua fazenda no AgroOS para que eu possa analisar seu perfil com dados reais.'}
+                : 'Configure sua fazenda no SmartAgroOS para que eu possa analisar seu perfil com dados reais.'}
             </p>
             {scoreData && (
               <div className="grid grid-cols-2 gap-2 max-w-md w-full">

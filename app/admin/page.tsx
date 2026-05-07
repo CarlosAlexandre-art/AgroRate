@@ -323,7 +323,7 @@ export default function AdminPage() {
               <div className="font-bold text-slate-900 mb-4">Eventos disponíveis</div>
               <div className="space-y-3">
                 {[
-                  { event: 'score.recalculate', desc: 'Recalcula score quando AgroOS atualiza dados. Payload: { userId }', trigger: 'AgroOS → n8n → AgroRate' },
+                  { event: 'score.recalculate', desc: 'Recalcula score quando SmartAgroOS atualiza dados. Payload: { userId }', trigger: 'SmartAgroOS → n8n → AgroRate' },
                   { event: 'score.threshold', desc: 'Verifica se score cruzou limiar. Payload: { userId, threshold }', trigger: 'Cron diário' },
                   { event: 'agrocore.sync', desc: 'Sincroniza novo contrato/avaliação do AgroCore. Payload: { supabaseId, eventType }', trigger: 'AgroCore → n8n → AgroRate' },
                   { event: 'offer.broadcast', desc: 'Retorna lista de produtores elegíveis para uma oferta. Payload: { minScore, partnerName }', trigger: 'Manual ou agendado' },
@@ -362,7 +362,7 @@ function ScoresTable() {
 
   if (!data.length) return (
     <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center text-slate-400">
-      Nenhum score calculado ainda. Produtores precisam ter dados no AgroOS.
+      Nenhum score calculado ainda. Produtores precisam ter dados no SmartAgroOS.
     </div>
   )
 

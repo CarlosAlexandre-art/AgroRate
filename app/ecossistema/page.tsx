@@ -15,7 +15,7 @@ const SYSTEMS = [
     features: ['Marketplace de serviços', 'Prestadores verificados', 'Pagamento com escrow', 'Avaliações reais', 'Match automático por localização'],
   },
   {
-    name: 'AgroOS',
+    name: 'SmartAgroOS',
     tagline: 'O Sistema Operacional da Fazenda',
     color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
     badge: 'bg-emerald-100 text-emerald-700',
@@ -35,7 +35,7 @@ const SYSTEMS = [
     href: '/dashboard',
     desc: 'Transforma dados reais da fazenda em score de crédito. Conecta produtores a bancos, cooperativas e fintechs com taxas baseadas na performance real da operação.',
     role: 'Monetiza a produção',
-    contribution: 'Processa dados do AgroCore e AgroOS para gerar score e acesso a crédito',
+    contribution: 'Processa dados do AgroCore e SmartAgroOS para gerar score e acesso a crédito',
     features: ['Score de 0 a 1000', 'Marketplace de crédito', 'Conselheiro IA', 'Parceiros financeiros', 'Histórico de evolução'],
     active: true,
   },
@@ -43,7 +43,7 @@ const SYSTEMS = [
 
 const FLOW = [
   { from: 'AgroCore', to: 'AgroRate', data: 'Dados de serviços executados, frequência e volume de operações' },
-  { from: 'AgroOS', to: 'AgroRate', data: 'Receitas, custos, atividades, equipe e histórico financeiro' },
+  { from: 'SmartAgroOS', to: 'AgroRate', data: 'Receitas, custos, atividades, equipe e histórico financeiro' },
   { from: 'AgroRate', to: 'Bancos', data: 'Score qualificado + perfil do produtor para análise de crédito' },
 ]
 
@@ -67,7 +67,7 @@ export default function EcossistemaPage() {
             </span>
           </h1>
           <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-            O AgroCore executa serviços. O AgroOS controla a operação. O AgroRate transforma tudo isso em crédito rural. Juntos, formam a infraestrutura digital da fazenda moderna.
+            O AgroCore executa serviços. O SmartAgroOS controla a operação. O AgroRate transforma tudo isso em crédito rural. Juntos, formam a infraestrutura digital da fazenda moderna.
           </p>
         </div>
       </section>
@@ -152,7 +152,7 @@ export default function EcossistemaPage() {
             </Link>
             <a href="https://agros-os.vercel.app" target="_blank" rel="noopener noreferrer"
               className="border-2 border-slate-200 text-slate-700 font-semibold px-8 py-4 rounded-2xl hover:border-[#065f46] hover:text-[#065f46] transition-all">
-              Conhecer o AgroOS →
+              Conhecer o SmartAgroOS →
             </a>
           </div>
         </div>

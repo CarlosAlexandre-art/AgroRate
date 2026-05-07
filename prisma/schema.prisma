@@ -55,6 +55,7 @@ model User {
   pushSubscriptions PushSubscription[] // AgroOS — não remover
   properties        Property[]
   aiChatMessages    AiChatMessage[]
+  bankConsents      BankConsent[]
   createdAt        DateTime  @default(now())
 }
 
@@ -407,4 +408,19 @@ model PropertyDocument {
   updatedAt   DateTime @updatedAt
 
   @@index([propertyId])
+}
+
+model BankConsent {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution String
+  active      Boolean   @default(false)
+  grantedAt   DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, institution])
+  @@index([userId])
 }

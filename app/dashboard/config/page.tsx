@@ -268,7 +268,7 @@ export default function ConfigPage() {
             </div>
             <div className="bg-emerald-50 rounded-xl p-3 text-center">
               <div className="text-xs text-slate-500 mb-0.5">Integração</div>
-              <div className="font-bold text-emerald-700 text-sm">AgroOS ativo</div>
+              <div className="font-bold text-emerald-700 text-sm">SmartAgroOS ativo</div>
             </div>
           </div>
         )}
@@ -299,7 +299,7 @@ export default function ConfigPage() {
           ))}
         </div>
         <p className="text-xs text-slate-400 mt-3 leading-relaxed">
-          O AgroRate usa o mesmo login e banco de dados do AgroOS. Seus dados de propriedade, receitas e custos alimentam seu score automaticamente.
+          O AgroRate usa o mesmo login e banco de dados do SmartAgroOS. Seus dados de propriedade, receitas e custos alimentam seu score automaticamente.
         </p>
       </div>
 

@@ -45,7 +45,7 @@ function buildSteps(cl: Checklist, sd: ScoreData): Step[] {
     {
       id: 'property',
       icon: '🏡',
-      title: 'Cadastre sua propriedade no AgroOS',
+      title: 'Cadastre sua propriedade no SmartAgroOS',
       desc: 'A propriedade é a base do score. Informe nome, localização e tamanho em hectares.',
       impact: '+até 200 pts Operacional',
       impactPts: 200,
@@ -302,7 +302,7 @@ export default function AcelerarPage() {
           <div className="bg-gradient-to-r from-[#065f46] to-emerald-600 rounded-2xl p-5 text-white">
             <div className="font-bold mb-1">🚀 Dica de aceleração</div>
             <p className="text-emerald-100 text-sm leading-relaxed">
-              Completar os 3 primeiros passos (receita, custos e propriedade) normalmente eleva o score em <strong>200–400 pontos</strong> nos primeiros 7 dias. O score é recalculado automaticamente toda vez que novos dados são inseridos no AgroOS.
+              Completar os 3 primeiros passos (receita, custos e propriedade) normalmente eleva o score em <strong>200–400 pontos</strong> nos primeiros 7 dias. O score é recalculado automaticamente toda vez que novos dados são inseridos no SmartAgroOS.
             </p>
             <Link href="/dashboard/ia"
               className="inline-flex items-center gap-2 mt-3 text-sm font-bold bg-white text-[#065f46] px-4 py-2 rounded-xl hover:bg-emerald-50 transition-colors">
@@ -315,10 +315,10 @@ export default function AcelerarPage() {
       {!loading && !scoreData && (
         <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center text-slate-400">
           <div className="text-4xl mb-3">🌾</div>
-          <p className="text-sm">Configure sua conta no AgroOS para gerar o score.</p>
+          <p className="text-sm">Configure sua conta no SmartAgroOS para gerar o score.</p>
           <a href={AGROOS_URL} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-2 mt-4 text-sm font-bold text-white bg-[#065f46] px-4 py-2.5 rounded-xl hover:bg-[#047857] transition-colors">
-            Abrir AgroOS →
+            Abrir SmartAgroOS →
           </a>
         </div>
       )}

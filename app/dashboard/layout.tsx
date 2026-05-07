@@ -117,7 +117,7 @@ function NavItem({ href, label, icon, active, badge, onClick }: { href: string; 
   return (
     <Link href={href} onClick={onClick}
       className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all group ${
-        active ? 'bg-[#065f46] text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/8'
+        active ? 'bg-[#065f46] text-white shadow-sm shadow-emerald-900/40' : 'text-slate-400 hover:text-white hover:bg-white/8'
       }`}>
       <span className={active ? 'text-white' : 'text-slate-500 group-hover:text-white transition-colors'}>{icon}</span>
       <span className="flex-1">{label}</span>
@@ -181,7 +181,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pageTitle = PAGE_TITLES[pathname] ?? 'Dashboard'
 
   const Sidebar = ({ mobile }: { mobile?: boolean }) => (
-    <aside className={`flex flex-col bg-[#0f172a] h-full ${mobile ? 'w-72' : 'w-60'} border-r border-white/5`}>
+    <aside className={`flex flex-col h-full ${mobile ? 'w-72' : 'w-60'} border-r border-white/5`} style={{background: 'linear-gradient(180deg, #0b1628 0%, #0f172a 55%, #062418 100%)'}}>
       {/* Logo */}
       <div className="px-5 py-4 border-b border-white/8 flex-shrink-0">
         <Link href="/" className="flex items-center gap-2.5">
@@ -302,7 +302,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             </Link>
             <Link href="/dashboard/credito"
-              className="flex items-center gap-1.5 bg-[#065f46] text-white text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-[#047857] transition-colors">
+              className="btn-primary flex items-center gap-1.5 bg-[#065f46] text-white text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-[#047857] shadow-sm shadow-emerald-900/30 hover:shadow-emerald-800/40 hover:shadow-md">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/>
               </svg>

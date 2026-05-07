@@ -70,13 +70,13 @@ export default function CadastroPage() {
           <p className="text-emerald-200 text-sm">Calcule seu score de crédito rural em minutos</p>
         </div>
 
-        {/* Banner AgroOS — ATENÇÃO para usuários existentes */}
+        {/* Banner SmartAgroOS — ATENÇÃO para usuários existentes */}
         <div className="bg-amber-400/20 border border-amber-300/30 rounded-2xl px-4 py-3 mb-4 flex items-start gap-3">
           <div className="text-xl flex-shrink-0">⚠️</div>
           <div>
-            <div className="text-white font-semibold text-sm leading-snug">Já usa o AgroOS?</div>
+            <div className="text-white font-semibold text-sm leading-snug">Já usa o SmartAgroOS?</div>
             <div className="text-amber-200 text-xs mt-0.5 leading-relaxed">
-              Não crie uma nova conta. Vá direto para o login e use o <strong className="text-white">mesmo e-mail e senha</strong> do AgroOS — sua conta já funciona aqui.
+              Não crie uma nova conta. Vá direto para o login e use o <strong className="text-white">mesmo e-mail e senha</strong> do SmartAgroOS — sua conta já funciona aqui.
             </div>
             <Link href="/login" className="inline-flex items-center gap-1 text-xs font-bold text-white mt-1.5 hover:text-amber-200 transition-colors">
               Ir para o login →
@@ -144,7 +144,7 @@ export default function CadastroPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#065f46] text-white font-bold py-3.5 rounded-xl hover:bg-[#047857] disabled:opacity-50 transition-all shadow-lg hover:-translate-y-0.5"
+              className="btn-primary w-full bg-[#065f46] text-white font-bold py-3.5 rounded-xl hover:bg-[#047857] disabled:opacity-50 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/30 hover:shadow-xl"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -172,7 +172,7 @@ export default function CadastroPage() {
         </div>
 
         <p className="text-center text-xs text-emerald-300/70 mt-6">
-          Parte do ecossistema AgroCore · AgroOS · AgroRate
+          Parte do ecossistema AgroCore · SmartAgroOS · AgroRate
         </p>
       </div>
     </div>

@@ -69,7 +69,7 @@ export default function Nav() {
                   Entrar
                 </Link>
                 <Link href="/cadastro"
-                  className="bg-[#065f46] text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-[#047857] transition-all shadow-lg shadow-emerald-900/20 hover:-translate-y-0.5">
+                  className="btn-primary bg-[#065f46] text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-[#047857] shadow-lg shadow-emerald-900/20 hover:shadow-emerald-800/30 hover:shadow-xl">
                   Calcular score grátis
                 </Link>
               </>

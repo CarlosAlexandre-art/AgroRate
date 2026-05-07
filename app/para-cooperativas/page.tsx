@@ -30,7 +30,7 @@ const ADVANTAGES = [
 ]
 
 const WORKFLOW = [
-  { num: '1', title: 'Produtor se cadastra no AgroRate', desc: 'Usa o mesmo login do AgroOS. Score calculado automaticamente com dados reais da fazenda.' },
+  { num: '1', title: 'Produtor se cadastra no AgroRate', desc: 'Usa o mesmo login do SmartAgroOS. Score calculado automaticamente com dados reais da fazenda.' },
   { num: '2', title: 'Cooperativa recebe o lead', desc: 'Via API ou painel admin: score, documentos, histórico financeiro e linhas elegíveis — tudo em um JSON.' },
   { num: '3', title: 'Gerente faz análise final', desc: 'Com 80% do trabalho já feito pelo AgroRate, o gerente foca na visita e na relação com o associado.' },
   { num: '4', title: 'Crédito aprovado', desc: 'AgroRate recebe confirmação e registra a operação. Comissão calculada automaticamente.' },
@@ -177,7 +177,7 @@ export default function ParaCooperativasPage() {
       </section>
 
       <footer className="border-t border-slate-100 px-6 py-6 text-center text-xs text-slate-400">
-        AgroRate · cooperativas@agrorate.com.br · Parte do ecossistema AgroCore · AgroOS · AgroRate
+        AgroRate · cooperativas@agrorate.com.br · Parte do ecossistema AgroCore · SmartAgroOS · AgroRate
       </footer>
     </div>
   )

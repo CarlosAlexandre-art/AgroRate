@@ -29,7 +29,7 @@ const SOLUTIONS = [
   },
   {
     step: '03',
-    title: 'Dados financeiros do AgroOS',
+    title: 'Dados financeiros do SmartAgroOS',
     desc: 'Receitas, custos, margem e histórico produtivo diretamente do sistema operacional da fazenda — dados reais, não declaratórios.',
     color: 'bg-violet-50 border-violet-100',
   },
@@ -245,7 +245,7 @@ export default function ParaBancosPage() {
       </section>
 
       <footer className="border-t border-slate-100 px-6 py-6 text-center text-xs text-slate-400">
-        AgroRate · Parte do ecossistema AgroCore · AgroOS · AgroRate · Plano Safra 2025/26
+        AgroRate · Parte do ecossistema AgroCore · SmartAgroOS · AgroRate · Plano Safra 2025/26
       </footer>
     </div>
   )

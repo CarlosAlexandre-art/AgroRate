@@ -15,7 +15,7 @@ const LAYERS = [
       { label: 'Atividades concluídas', desc: 'Volume de operações realizadas nos últimos 12 meses (30%)' },
       { label: 'Área total da propriedade', desc: 'Tamanho da operação como indicador de escala (20%)' },
     ],
-    tip: 'Registre todas as receitas de colheita no AgroOS. Quanto mais detalhado, mais alto o score.',
+    tip: 'Registre todas as receitas de colheita no SmartAgroOS. Quanto mais detalhado, mais alto o score.',
   },
   {
     icon: '💰',
@@ -29,7 +29,7 @@ const LAYERS = [
       { label: 'Margem operacional', desc: 'Percentual de lucro sobre a receita total (60% do peso)' },
       { label: 'Relação custo-receita', desc: 'Quanto cada real de custo gera de receita (40%)' },
     ],
-    tip: 'Cadastre todos os custos no AgroOS (insumos, mão de obra, maquinário) para ter uma margem real calculada.',
+    tip: 'Cadastre todos os custos no SmartAgroOS (insumos, mão de obra, maquinário) para ter uma margem real calculada.',
   },
   {
     icon: '📋',
@@ -43,7 +43,7 @@ const LAYERS = [
       { label: 'Regularidade de lançamentos', desc: 'Com que frequência você registra custos (30%)' },
       { label: 'Pontualidade de registros', desc: 'Se os registros são feitos no prazo correto (70%)' },
     ],
-    tip: 'Lance custos mensalmente no AgroOS, não deixe acumular. Consistência vale mais do que volume.',
+    tip: 'Lance custos mensalmente no SmartAgroOS, não deixe acumular. Consistência vale mais do que volume.',
   },
   {
     icon: '⚙️',
@@ -59,7 +59,7 @@ const LAYERS = [
       { label: 'Custos lançados', desc: 'Histórico financeiro disponível (30%)' },
       { label: 'Receitas registradas', desc: 'Entradas financeiras documentadas (30%)' },
     ],
-    tip: 'Complete o cadastro da propriedade no AgroOS: adicione talhões, equipe e registre pelo menos uma receita.',
+    tip: 'Complete o cadastro da propriedade no SmartAgroOS: adicione talhões, equipe e registre pelo menos uma receita.',
   },
 ]
 
@@ -69,7 +69,7 @@ const CATEGORIES = [
   { label: 'Bom', range: '600–749', color: 'text-teal-700 bg-teal-50 border-teal-300', desc: 'Boas ofertas disponíveis. Taxas competitivas.', offers: '6' },
   { label: 'Regular', range: '450–599', color: 'text-blue-700 bg-blue-50 border-blue-300', desc: 'Crédito disponível com condições padrão de mercado.', offers: '3' },
   { label: 'Baixo', range: '300–449', color: 'text-orange-700 bg-orange-50 border-orange-300', desc: 'Crédito limitado. Foco em melhorar os dados da fazenda.', offers: '1' },
-  { label: 'Crítico', range: '0–299', color: 'text-red-700 bg-red-50 border-red-300', desc: 'Complete seu cadastro no AgroOS para subir o score.', offers: '0' },
+  { label: 'Crítico', range: '0–299', color: 'text-red-700 bg-red-50 border-red-300', desc: 'Complete seu cadastro no SmartAgroOS para subir o score.', offers: '0' },
 ]
 
 function MiniGauge({ score, color }: { score: number; color: string }) {

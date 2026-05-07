@@ -92,7 +92,7 @@ export default function HistoricoPage() {
     <div className="p-5 max-w-xl mx-auto pt-12 text-center">
       <div className="text-4xl mb-4">📊</div>
       <h2 className="text-xl font-bold text-slate-800 mb-2">Sem histórico ainda</h2>
-      <p className="text-slate-500 text-sm">Configure sua propriedade no AgroOS para começar a gerar histórico de score.</p>
+      <p className="text-slate-500 text-sm">Configure sua propriedade no SmartAgroOS para começar a gerar histórico de score.</p>
     </div>
   )
 
@@ -216,7 +216,7 @@ export default function HistoricoPage() {
             <div className="text-center py-6">
               <div className="text-3xl mb-2">📭</div>
               <p className="text-sm text-slate-400">Nenhuma atividade ou receita registrada ainda.</p>
-              <p className="text-xs text-slate-300 mt-1">Registre dados no AgroOS para ver o histórico aqui.</p>
+              <p className="text-xs text-slate-300 mt-1">Registre dados no SmartAgroOS para ver o histórico aqui.</p>
             </div>
           ) : (
             <div className="space-y-3">
