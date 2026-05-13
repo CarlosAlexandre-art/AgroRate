@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { groq } from '@/lib/groq'
 
@@ -27,11 +26,12 @@ function monthKey(date: Date): string {
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    const supabase = await createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { supabaseId: authUser.id },
       include: {
         properties: {
           include: {
