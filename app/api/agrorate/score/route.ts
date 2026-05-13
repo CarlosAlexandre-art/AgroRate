@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAgrocoreData, calcAgrocoreBonus } from '@/lib/prisma-agrocore'
 
 // 60% fazenda (SmartAgroOS+AgroCore), 20% perfil, 10% documentação, 10% bônus externos
-const WEIGHTS = { production: 0.35, efficiency: 0.25, behavior: 0.20, operational: 0.10 }
+const WEIGHTS = { production: 0.40, efficiency: 0.20, behavior: 0.20, operational: 0.10 }
 
 async function calcProduction(propertyId: string) {
   const property = await prisma.property.findUnique({
