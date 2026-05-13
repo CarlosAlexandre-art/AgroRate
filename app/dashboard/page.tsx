@@ -107,6 +107,18 @@ export default function DashboardPage() {
   const [data, setData] = useState<ScoreData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [predicao, setPredicao] = useState<any>(null)
+  const [loadingPredicao, setLoadingPredicao] = useState(false)
+
+  async function carregarPredicao() {
+    setLoadingPredicao(true)
+    try {
+      const res = await fetch('/api/ai/score-predicao')
+      if (res.ok) setPredicao(await res.json())
+    } finally {
+      setLoadingPredicao(false)
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -252,6 +264,68 @@ export default function DashboardPage() {
             </svg>
           </Link>
         </div>
+      </div>
+
+      {/* Previsão ML — tendência + plano de ação */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50">
+          <div>
+            <div className="font-bold text-slate-800">📈 Previsão do Score (ML)</div>
+            <div className="text-xs text-slate-400">Regressão linear + NVIDIA NIM · tendência dos últimos meses</div>
+          </div>
+          <button
+            onClick={carregarPredicao}
+            disabled={loadingPredicao}
+            className="text-xs font-bold bg-violet-600 text-white px-3 py-1.5 rounded-xl hover:bg-violet-700 transition disabled:opacity-50"
+          >
+            {loadingPredicao ? '⏳ Analisando...' : '⚡ Prever'}
+          </button>
+        </div>
+        {predicao && (
+          <div className="p-5 space-y-4">
+            {/* Tendência + previsão 30/60/90 */}
+            <div className="grid grid-cols-4 gap-3 text-center">
+              <div className="bg-slate-50 rounded-xl py-3">
+                <div className="text-lg font-bold text-slate-700">{predicao.scoreAtual}</div>
+                <div className="text-[10px] text-slate-400">Atual</div>
+              </div>
+              <div className="bg-violet-50 rounded-xl py-3">
+                <div className="text-lg font-bold text-violet-700">{predicao.previsao.dias30}</div>
+                <div className="text-[10px] text-violet-400">30 dias</div>
+              </div>
+              <div className="bg-violet-50 rounded-xl py-3">
+                <div className="text-lg font-bold text-violet-700">{predicao.previsao.dias60}</div>
+                <div className="text-[10px] text-violet-400">60 dias</div>
+              </div>
+              <div className={`rounded-xl py-3 ${predicao.previsao.dias90 > predicao.scoreAtual ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                <div className={`text-lg font-bold ${predicao.previsao.dias90 > predicao.scoreAtual ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {predicao.previsao.dias90}
+                </div>
+                <div className={`text-[10px] ${predicao.previsao.dias90 > predicao.scoreAtual ? 'text-emerald-400' : 'text-red-400'}`}>90 dias</div>
+              </div>
+            </div>
+            {/* Próxima categoria */}
+            {predicao.proximaCategoria && (
+              <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                <span className="text-xl">🎯</span>
+                <div>
+                  <div className="text-sm font-bold text-amber-800">
+                    Faltam {predicao.proximaCategoria.pontosNecessarios} pts para {predicao.proximaCategoria.nome}
+                  </div>
+                  {predicao.proximaCategoria.diasEstimados && (
+                    <div className="text-xs text-amber-600">~{predicao.proximaCategoria.diasEstimados} dias no ritmo atual</div>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* Plano de ação NIM */}
+            <div className="bg-violet-50 border border-violet-100 rounded-xl px-4 py-3">
+              <div className="text-xs font-bold text-violet-600 mb-1">🤖 Plano de ação personalizado</div>
+              <p className="text-sm text-slate-700 whitespace-pre-line">{predicao.planoIA}</p>
+              <p className="text-[10px] text-slate-400 mt-2">{predicao.modelo}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Banner aceleração — apenas quando score < 600 */}
