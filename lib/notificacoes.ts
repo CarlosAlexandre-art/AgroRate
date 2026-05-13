@@ -3,11 +3,18 @@ import webpush from 'web-push'
 import { prisma } from '@/lib/prisma'
 import { Resend } from 'resend'
 
-webpush.setVapidDetails(
-  'mailto:suporte@agrorate.com.br',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
+let _vapidSet = false
+function getWebPush() {
+  if (!_vapidSet && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+      'mailto:suporte@agrorate.com.br',
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    )
+    _vapidSet = true
+  }
+  return webpush
+}
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY!)
@@ -104,7 +111,7 @@ async function enviarPushNotification(data: NotificationData, subscriptions: any
 
   await Promise.allSettled(
     subscriptions.map(sub =>
-      webpush.sendNotification(
+      getWebPush().sendNotification(
         { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
         payload
       ).catch(async (err: { statusCode?: number }) => {
