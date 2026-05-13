@@ -1,6 +1,13 @@
+// @ts-expect-error web-push não tem @types — instalar via `npm i -D @types/web-push` se necessário
+import webpush from 'web-push'
 import { prisma } from '@/lib/prisma'
-import { createClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
+
+webpush.setVapidDetails(
+  'mailto:suporte@agrorate.com.br',
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+  process.env.VAPID_PRIVATE_KEY!
+)
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY!)
@@ -88,40 +95,26 @@ export async function enviarNotificacao(data: NotificationData) {
 async function enviarPushNotification(data: NotificationData, subscriptions: any[]) {
   if (subscriptions.length === 0) return
 
-  const payload = {
-    title: data.titulo,
-    body: data.mensagem,
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    tag: `agrorate-${data.tipo}`,
-    data: {
-      url: '/dashboard',
-      ...data.dadosAdicionais
-    }
-  }
+  const payload = JSON.stringify({
+    titulo: data.titulo,
+    corpo: data.mensagem,
+    url: '/dashboard',
+    ...data.dadosAdicionais
+  })
 
-  for (const subscription of subscriptions) {
-    try {
-      await fetch('https://fcm.googleapis.com/fcm/send', {
-        method: 'POST',
-        headers: {
-          'Authorization': `key=${process.env.FCM_SERVER_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          to: subscription.endpoint,
-          notification: payload,
-          webpush: {
-            headers: {
-              'TTL': '86400' // 24 horas
-            }
-          }
-        })
+  await Promise.allSettled(
+    subscriptions.map(sub =>
+      webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+        payload
+      ).catch(async (err: { statusCode?: number }) => {
+        // Remove subscriptions inválidas (410 = expirada)
+        if (err.statusCode === 410) {
+          await prisma.pushSubscription.delete({ where: { endpoint: sub.endpoint } }).catch(() => {})
+        }
       })
-    } catch (error) {
-      console.error('Erro ao enviar push AgroRate para', subscription.endpoint, error)
-    }
-  }
+    )
+  )
 }
 
 // ─── Email Notification ─────────────────────────────────────────────────────
@@ -302,7 +295,6 @@ export class NotificacoesAgroRate {
 
 export async function processarNotificacoesAgendadas() {
   try {
-    // Lógica similar à do SmartAgroOS mas específica para AgroRate
     console.log('📬 Notificações AgroRate agendadas processadas')
   } catch (error) {
     console.error('Erro ao processar notificações AgroRate agendadas:', error)

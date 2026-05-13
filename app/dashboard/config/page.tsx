@@ -35,6 +35,17 @@ export default function ConfigPage() {
   const [consents, setConsents] = useState<Record<string, boolean>>(DEFAULT_CONSENTS)
   const [consentMsg, setConsentMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
+  // Push notifications
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | null>(null)
+  const [pushMsg, setPushMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [pushLoading, setPushLoading] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setPushPermission(Notification.permission)
+    }
+  }, [])
+
   useEffect(() => {
     async function load() {
       const supabase = createClient()
@@ -140,6 +151,39 @@ export default function ConfigPage() {
     const all = Object.fromEntries(CONSENTS.map(c => [c.id, next]))
     setConsents(all)
     saveConsents(all)
+  }
+
+  async function handleEnablePush() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+      setPushMsg({ ok: false, text: 'Push não disponível neste navegador.' })
+      return
+    }
+    setPushLoading(true)
+    setPushMsg(null)
+    try {
+      const permission = await Notification.requestPermission()
+      setPushPermission(permission)
+      if (permission !== 'granted') {
+        setPushMsg({ ok: false, text: 'Permissão negada. Habilite nas configurações do navegador.' })
+        setPushLoading(false)
+        return
+      }
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      })
+      const { endpoint, keys } = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
+      await fetch('/api/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint, p256dh: keys.p256dh, auth: keys.auth }),
+      })
+      setPushMsg({ ok: true, text: 'Notificações ativadas! Você receberá atualizações do seu score 2x ao dia.' })
+    } catch {
+      setPushMsg({ ok: false, text: 'Erro ao ativar notificações. Tente novamente.' })
+    }
+    setPushLoading(false)
   }
 
   async function handleSignOut() {
@@ -347,6 +391,45 @@ export default function ConfigPage() {
           </p>
         </div>
       </div>
+
+      {/* Notificações Push */}
+      {'Notification' in (typeof window !== 'undefined' ? window : {}) && (
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Notificações</div>
+          <div className="flex items-start gap-4">
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-slate-800 mb-0.5">Alertas do score</div>
+              <div className="text-xs text-slate-500">
+                {pushPermission === 'granted'
+                  ? 'Ativo — você receberá atualizações do score às 9h e 18h.'
+                  : pushPermission === 'denied'
+                  ? 'Bloqueado pelo navegador. Habilite manualmente nas configurações do site.'
+                  : 'Receba notificações do seu AgroRate 2x ao dia (manhã e tarde).'}
+              </div>
+              {pushMsg && (
+                <div className={`mt-2 text-xs font-medium ${pushMsg.ok ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {pushMsg.text}
+                </div>
+              )}
+            </div>
+            {pushPermission !== 'granted' && pushPermission !== 'denied' && (
+              <button
+                onClick={handleEnablePush}
+                disabled={pushLoading}
+                className="flex-shrink-0 px-4 py-2 bg-[#065f46] text-white text-xs font-bold rounded-xl hover:bg-[#047857] transition-colors disabled:opacity-50"
+              >
+                {pushLoading ? 'Ativando...' : 'Ativar'}
+              </button>
+            )}
+            {pushPermission === 'granted' && (
+              <div className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"/>
+                Ativo
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Ações */}
       <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">

@@ -169,6 +169,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (res.ok) { const j = await res.json(); setScore(j.score) }
       } catch { /* score indisponível */ }
       setScoreLoaded(true)
+
+      // Push notification opt-in silencioso (só se permissão já foi concedida ou padrão)
+      if (
+        typeof window !== 'undefined' &&
+        'serviceWorker' in navigator &&
+        'PushManager' in window &&
+        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY &&
+        Notification.permission !== 'denied'
+      ) {
+        try {
+          const reg = await navigator.serviceWorker.ready
+          const existing = await reg.pushManager.getSubscription()
+          if (!existing && Notification.permission === 'granted') {
+            const sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+            })
+            const { endpoint, keys } = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
+            await fetch('/api/push', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ endpoint, p256dh: keys.p256dh, auth: keys.auth }),
+            }).catch(() => {})
+          }
+        } catch { /* push não disponível */ }
+      }
     })
   }, [router])
 
