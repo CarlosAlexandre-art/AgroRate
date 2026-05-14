@@ -78,6 +78,8 @@ model Property {
   creditRequests CreditRequest[]
   commissions    Commission[]
   documents      PropertyDocument[]
+  animais        Animal[]
+  lotes          Lote[]
   createdAt      DateTime        @default(now())
 }
 
@@ -423,4 +425,140 @@ model BankConsent {
 
   @@unique([userId, institution])
   @@index([userId])
+}
+
+// ─── Pecuária: Confinamento Inteligente + Passaporte Digital Animal ───────────
+
+enum EspecieAnimal {
+  BOVINO
+  OVINO
+  CAPRINO
+  SUINO
+  AVE
+  OUTRO
+}
+
+enum SexoAnimal {
+  MACHO
+  FEMEA
+}
+
+enum ObjetivoLote {
+  ABATE
+  LEITE
+  REPRODUCAO
+  RECRIA
+}
+
+enum StatusLote {
+  ATIVO
+  CONCLUIDO
+  CANCELADO
+}
+
+enum TipoSaude {
+  VACINA
+  MEDICACAO
+  EXAME
+  CIRURGIA
+  OBSERVACAO
+}
+
+model Animal {
+  id               String            @id @default(uuid())
+  propertyId       String
+  property         Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  loteId           String?
+  lote             Lote?             @relation(fields: [loteId], references: [id])
+  sisbovNumero     String?
+  brincoNumero     String?
+  nome             String?
+  especie          EspecieAnimal     @default(BOVINO)
+  raca             String?
+  sexo             SexoAnimal
+  dataNascimento   DateTime?
+  pesoEntrada      Decimal           @default(0)
+  pesoAtual        Decimal           @default(0)
+  origemFazenda    String?
+  origemUF         String?
+  ativo            Boolean           @default(true)
+  saudes           AnimalSaude[]
+  movimentos       AnimalMovimento[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([propertyId])
+  @@index([loteId])
+  @@index([sisbovNumero])
+}
+
+model Lote {
+  id                 String        @id @default(uuid())
+  propertyId         String
+  property           Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  nome               String
+  especie            EspecieAnimal @default(BOVINO)
+  raca               String?
+  objetivo           ObjetivoLote  @default(ABATE)
+  status             StatusLote    @default(ATIVO)
+  dataEntrada        DateTime      @default(now())
+  dataPrevistaAbate  DateTime?
+  dataAbate          DateTime?
+  cabecasEntrada     Int           @default(0)
+  pesoMedioEntrada   Decimal       @default(0)
+  custoEntrada       Decimal       @default(0)
+  metaGMD            Decimal       @default(1.2)
+  animais            Animal[]
+  diarios            LoteDiario[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([propertyId])
+}
+
+model LoteDiario {
+  id            String   @id @default(uuid())
+  loteId        String
+  lote          Lote     @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  data          DateTime @default(now())
+  pesoMedio     Decimal?
+  consumoRacao  Decimal  @default(0)
+  consumoAgua   Decimal  @default(0)
+  mortalidade   Int      @default(0)
+  medicacao     String?
+  observacoes   String?
+  createdAt     DateTime @default(now())
+
+  @@index([loteId, data])
+}
+
+model AnimalSaude {
+  id           String    @id @default(uuid())
+  animalId     String
+  animal       Animal    @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  tipo         TipoSaude @default(OBSERVACAO)
+  descricao    String
+  produto      String?
+  dose         String?
+  veterinario  String?
+  proximaDose  DateTime?
+  data         DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+
+  @@index([animalId])
+}
+
+model AnimalMovimento {
+  id         String   @id @default(uuid())
+  animalId   String
+  animal     Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  tipo       String
+  origem     String?
+  destino    String?
+  pesoNaData Decimal?
+  motivo     String?
+  data       DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([animalId])
 }
