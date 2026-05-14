@@ -147,51 +147,40 @@ async function enviarEmailNotification(data: NotificationData, userEmail: string
 // ─── Template de Email ─────────────────────────────────────────────────────
 
 function gerarEmailTemplate(data: NotificationData): string {
-  const cores = {
-    INFO: 'bg-blue-500',
-    SUCCESS: 'bg-green-500',
-    WARNING: 'bg-yellow-500',
-    ERROR: 'bg-red-500',
-    PROMOTION: 'bg-purple-500',
-    REMINDER: 'bg-indigo-500'
+  const badgeBg: Record<string, string> = {
+    INFO: '#3b82f6',
+    SUCCESS: '#22c55e',
+    WARNING: '#f59e0b',
+    ERROR: '#ef4444',
+    PROMOTION: '#a855f7',
+    REMINDER: '#6366f1',
   }
 
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        body { font-family: Arial, sans-serif; background: #020c08; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #0f172a 0%, #1a2e1a 100%); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .header { background: linear-gradient(135deg, #16a34a 0%, #059669 100%); color: white; padding: 30px; text-align: center; }
-        .content { padding: 30px; color: #e2e8f0; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; color: white; font-size: 12px; font-weight: bold; margin-bottom: 20px; }
-        .footer { background: #020c08; padding: 20px; text-align: center; color: #64748b; font-size: 14px; }
-        .cta { display: inline-block; background: #16a34a; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 20px; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>💳 AgroRate</h1>
-          <p>Score de Crédito Rural Inteligente</p>
-        </div>
-        <div class="content">
-          <div class="badge ${cores[data.tipo]}">${data.tipo}</div>
-          <h2>${data.titulo}</h2>
-          <p>${data.mensagem}</p>
-          ${data.dadosAdicionais ? `<p style="background: #1a2e1a; padding: 15px; border-radius: 8px; margin-top: 20px;">${JSON.stringify(data.dadosAdicionais, null, 2)}</p>` : ''}
-          <a href="https://agro-rate.vercel.app/dashboard" class="cta">Ver Meu Score</a>
-        </div>
-        <div class="footer">
-          <p>© 2026 AgroRate - Powered by OryonAG</p>
-          <p>Se você não deseja receber estes emails, <a href="https://agro-rate.vercel.app/configuracoes">clique aqui</a></p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family:Arial,sans-serif;background:#020c08;margin:0;padding:20px;">
+  <div style="max-width:600px;margin:0 auto;background:#0f172a;border-radius:12px;overflow:hidden;border:1px solid #1e293b;">
+    <div style="background:linear-gradient(135deg,#16a34a 0%,#059669 100%);color:white;padding:30px;text-align:center;">
+      <h1 style="margin:0 0 8px;font-size:24px;">💳 AgroRate</h1>
+      <p style="margin:0;font-size:14px;opacity:0.9;">Score de Crédito Rural Inteligente · OryonAG</p>
+    </div>
+    <div style="padding:30px;color:#e2e8f0;">
+      <span style="display:inline-block;padding:4px 12px;border-radius:20px;color:white;font-size:11px;font-weight:700;background:${badgeBg[data.tipo] ?? '#3b82f6'};margin-bottom:20px;text-transform:uppercase;letter-spacing:0.8px;">${data.tipo}</span>
+      <h2 style="margin:0 0 12px;font-size:20px;color:#f1f5f9;">${data.titulo}</h2>
+      <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#94a3b8;">${data.mensagem}</p>
+      <a href="https://agro-rate.vercel.app/dashboard" style="display:inline-block;background:#16a34a;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;">Ver Meu Score →</a>
+    </div>
+    <div style="background:#020c08;padding:20px;text-align:center;color:#475569;font-size:12px;">
+      <p style="margin:0 0 6px;">© 2026 AgroRate — Powered by OryonAG</p>
+      <p style="margin:0;"><a href="https://agro-rate.vercel.app/configuracoes" style="color:#475569;">Cancelar notificações</a></p>
+    </div>
+  </div>
+</body>
+</html>`
 }
 
 // ─── Notificações Automáticas AgroRate ───────────────────────────────────────────

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAgrocoreData, calcAgrocoreBonus } from '@/lib/prisma-agrocore'
+import { NotificacoesAgroRate } from '@/lib/notificacoes'
 
 // 60% fazenda (SmartAgroOS+AgroCore), 20% perfil, 10% documentação, 10% bônus externos
 const WEIGHTS = { production: 0.40, efficiency: 0.20, behavior: 0.20, operational: 0.10 }
@@ -233,6 +234,24 @@ export async function GET(request: NextRequest) {
         nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     })
+
+    // Notificação de mudança de score (fire-and-forget)
+    if (userId) {
+      const scoreAnterior = agroRateExistente?.score ?? null
+      prisma.user.findUnique({ where: { supabaseId: userId } }).then(dbUser => {
+        if (!dbUser) return
+        if (scoreAnterior === null) {
+          NotificacoesAgroRate.boasVindasAgroRate(dbUser.id, dbUser.name || 'Produtor')
+        } else {
+          const diferenca = finalScore - scoreAnterior
+          if (diferenca >= 20) {
+            NotificacoesAgroRate.scoreMelhorou(dbUser.id, scoreAnterior, finalScore, getCategory(finalScore))
+          } else if (diferenca <= -20) {
+            NotificacoesAgroRate.scorePiorou(dbUser.id, scoreAnterior, finalScore, getCategory(finalScore))
+          }
+        }
+      }).catch(() => {})
+    }
 
     return NextResponse.json({
       ...agroRate,
