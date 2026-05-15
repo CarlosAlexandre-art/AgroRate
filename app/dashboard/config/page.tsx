@@ -49,8 +49,9 @@ export default function ConfigPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const { data: { user: u } } = await supabase.auth.getUser()
-      if (!u) { router.push('/login'); return }
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) { router.push('/login'); return }
+      const u = session.user
 
       const [profileRes, consentsRes] = await Promise.all([
         fetch('/api/user/profile'),
