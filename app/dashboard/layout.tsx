@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import AnalisarDocumentoCredito from '@/components/AnalisarDocumentoCredito'
 
 const SCORE_COLOR = (s: number) =>
   s >= 900 ? '#b45309' : s >= 750 ? '#065f46' : s >= 600 ? '#0d9488' : s >= 450 ? '#1d4ed8' : s >= 300 ? '#c2410c' : '#b91c1c'
@@ -338,6 +339,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
         <main className="flex-1 overflow-y-auto overflow-x-hidden">{children}</main>
       </div>
+      <AnalisarDocumentoCredito />
     </div>
   )
 }
