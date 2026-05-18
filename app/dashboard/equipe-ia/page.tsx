@@ -228,6 +228,7 @@ export default function EquipeIAPage() {
   const [creating, setCreating] = useState(false)
   const [newAgent, setNewAgent] = useState({ nome: '', role: '', trigger: 'MANUAL' })
   const [loading, setLoading] = useState(true)
+  const [addError, setAddError] = useState<string | null>(null)
 
   const loadAgents = useCallback(async () => {
     try {
@@ -241,12 +242,18 @@ export default function EquipeIAPage() {
   useEffect(() => { loadAgents() }, [loadAgents])
 
   async function addFromTemplate(tmpl: typeof TEMPLATES[0]) {
+    setAddError(null)
     const r = await fetch('/api/agents', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome: tmpl.nome, role: tmpl.role, tipo: tmpl.tipo, tools: tmpl.tools, trigger: 'MANUAL' }),
     })
-    if (r.ok) await loadAgents()
+    if (r.ok) {
+      await loadAgents()
+    } else {
+      const body = await r.json().catch(() => ({}))
+      setAddError(body.error ?? `Erro ${r.status} ao adicionar especialista`)
+    }
   }
 
   async function addCustom() {
@@ -298,6 +305,11 @@ export default function EquipeIAPage() {
         {/* Templates / Specialists */}
         {tab === 'especialistas' && (
           <div className="space-y-4">
+            {addError && (
+              <div className="rounded-xl px-4 py-3 text-sm text-red-300 border border-red-500/30 bg-red-500/10">
+                {addError}
+              </div>
+            )}
             <p className="text-xs text-slate-500">Escolha um especialista pré-configurado para adicionar à sua equipe:</p>
             <div className="grid sm:grid-cols-2 gap-4">
               {TEMPLATES.map(tmpl => {
