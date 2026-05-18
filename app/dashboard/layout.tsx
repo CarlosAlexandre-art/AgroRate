@@ -22,6 +22,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/relatorio': 'Relatório',
   '/dashboard/alertas': 'Alertas',
   '/dashboard/ia': 'Conselheiro IA',
+  '/dashboard/equipe-ia': 'Equipe IA',
   '/dashboard/config': 'Configurações',
   '/dashboard/assinaturas': 'Assinaturas',
 }
@@ -94,6 +95,11 @@ const NAV: { group: string; items: { href: string; label: string; icon: React.Re
         href: '/dashboard/ia',
         label: 'Conselheiro IA',
         icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M12 2a8 8 0 0 1 8 8v4a8 8 0 0 1-8 8H8l-4 2v-4a8 8 0 0 1 0-16z"/><path d="M8 12h8M8 8h5"/></svg>,
+      },
+      {
+        href: '/dashboard/equipe-ia',
+        label: 'Equipe IA',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1 1 .03 2.798-1.442 2.798H4.24c-1.47 0-2.441-1.798-1.442-2.798L4.2 15.3"/></svg>,
       },
       {
         href: '/dashboard/assinaturas',
