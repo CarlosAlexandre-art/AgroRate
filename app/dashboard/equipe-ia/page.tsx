@@ -246,7 +246,7 @@ export default function EquipeIAPage() {
     const r = await fetch('/api/agents', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome: tmpl.nome, role: tmpl.role, tipo: tmpl.tipo, tools: tmpl.tools, trigger: 'MANUAL' }),
+      body: JSON.stringify({ nome: tmpl.nome, role: tmpl.role, tipo: 'PRONTO', tools: tmpl.tools, trigger: 'MANUAL' }),
     })
     if (r.ok) {
       await loadAgents()
@@ -272,9 +272,9 @@ export default function EquipeIAPage() {
   }
 
   const myAgents = agents
-  const templateTipos = TEMPLATES.map(t => t.tipo)
-  const customAgents = myAgents.filter(a => !templateTipos.includes(a.tipo))
-  const specialistAgents = myAgents.filter(a => templateTipos.includes(a.tipo))
+  const templateNomes = TEMPLATES.map(t => t.nome)
+  const customAgents = myAgents.filter(a => !templateNomes.includes(a.nome))
+  const specialistAgents = myAgents.filter(a => templateNomes.includes(a.nome))
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #0a1628 0%, #0f172a 50%, #06180e 100%)' }}>
@@ -313,7 +313,7 @@ export default function EquipeIAPage() {
             <p className="text-xs text-slate-500">Escolha um especialista pré-configurado para adicionar à sua equipe:</p>
             <div className="grid sm:grid-cols-2 gap-4">
               {TEMPLATES.map(tmpl => {
-                const already = specialistAgents.find(a => a.tipo === tmpl.tipo)
+                const already = myAgents.find(a => a.nome === tmpl.nome)
                 return (
                   <div key={tmpl.tipo} className={`relative rounded-2xl border overflow-hidden transition-all ${already ? 'border-white/5 opacity-60' : 'border-white/10 hover:border-white/20 cursor-pointer group'}`}>
                     <div className={`absolute inset-0 bg-gradient-to-br ${tmpl.color}`} />
