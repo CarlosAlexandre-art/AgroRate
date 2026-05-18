@@ -23,6 +23,12 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     const resultado = await runAgent(id, dbUser.id)
     return NextResponse.json({ ok: true, resultado })
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? 'Erro ao executar agente' }, { status: 500 })
+    const msg = e?.message ?? ''
+    if (msg.includes('429') || msg.includes('rate_limit') || msg.includes('Rate limit')) {
+      const match = msg.match(/(\d+\.?\d*)\s*s/)
+      const retryAfter = match ? Math.ceil(parseFloat(match[1])) : 15
+      return NextResponse.json({ error: 'RATE_LIMIT', retryAfter }, { status: 429 })
+    }
+    return NextResponse.json({ error: msg || 'Erro ao executar agente' }, { status: 500 })
   }
 }

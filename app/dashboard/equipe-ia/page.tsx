@@ -162,18 +162,32 @@ function AgentCard({ agent, onRun, onDelete, runningId }: { agent: Agent; onRun:
 }
 
 function RunModal({ agent, onClose }: { agent: Agent | null; onClose: () => void }) {
-  const [status, setStatus] = useState<'loading' | 'done' | 'error'>('loading')
+  const [status, setStatus] = useState<'loading' | 'done' | 'error' | 'rate_limit'>('loading')
   const [result, setResult] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [countdown, setCountdown] = useState(0)
+
+  const doRun = useCallback(async (a: Agent) => {
+    setStatus('loading'); setResult(null); setError(null); setCountdown(0)
+    try {
+      const r = await fetch(`/api/agents/${a.id}/run`, { method: 'POST' })
+      const d = await r.json()
+      if (d.ok) { setStatus('done'); setResult(d.resultado) }
+      else if (d.error === 'RATE_LIMIT') { setStatus('rate_limit'); setCountdown(d.retryAfter ?? 15) }
+      else { setStatus('error'); setError(d.error ?? 'Erro desconhecido') }
+    } catch (e: any) { setStatus('error'); setError(e.message) }
+  }, [])
+
+  useEffect(() => { if (agent) doRun(agent) }, [agent, doRun])
 
   useEffect(() => {
-    if (!agent) return
-    setStatus('loading'); setResult(null); setError(null)
-    fetch(`/api/agents/${agent.id}/run`, { method: 'POST' })
-      .then(r => r.json())
-      .then(d => { if (d.ok) { setResult(d.resultado); setStatus('done') } else { setError(d.error ?? 'Erro desconhecido'); setStatus('error') } })
-      .catch(e => { setError(e.message); setStatus('error') })
-  }, [agent])
+    if (countdown <= 0) {
+      if (status === 'rate_limit' && agent) doRun(agent)
+      return
+    }
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [countdown, status, agent, doRun])
 
   if (!agent) return null
   const t = tmplFor(agent)
@@ -189,7 +203,9 @@ function RunModal({ agent, onClose }: { agent: Agent | null; onClose: () => void
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: 14 }}>{agent.nome}</div>
-            <div style={{ fontSize: 11, color: '#475569' }}>{status === 'loading' ? 'Consultando dados reais…' : status === 'done' ? 'Análise concluída' : 'Erro na execução'}</div>
+            <div style={{ fontSize: 11, color: '#475569' }}>
+              {status === 'loading' ? 'Consultando dados reais…' : status === 'done' ? 'Análise concluída' : status === 'rate_limit' ? 'Alta demanda — aguardando' : 'Erro na execução'}
+            </div>
           </div>
           <button onClick={onClose} style={{ padding: 8, borderRadius: 10, background: 'rgba(255,255,255,0.05)', border: 'none', cursor: 'pointer', color: '#64748b', transition: 'color 0.15s' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#f1f5f9')}
@@ -210,6 +226,16 @@ function RunModal({ agent, onClose }: { agent: Agent | null; onClose: () => void
               <p style={{ fontSize: 13, color: '#64748b' }}>Agente analisando seus dados…</p>
             </div>
           )}
+          {status === 'rate_limit' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '24px 0' }}>
+              <div style={{ fontSize: 40 }}>⏳</div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontWeight: 800, fontSize: 15, color: '#f1f5f9', marginBottom: 6 }}>Alta demanda dos agentes autônomos</div>
+                <p style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>Aguarde a recuperação — retentando automaticamente</p>
+                <div style={{ fontSize: 44, fontWeight: 900, color: '#f59e0b', letterSpacing: '-2px', lineHeight: 1 }}>{countdown}s</div>
+              </div>
+            </div>
+          )}
           {status === 'error' && (
             <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 14, padding: 16 }}>
               <p style={{ fontSize: 13, color: '#f87171', lineHeight: 1.5 }}>{error}</p>
@@ -222,7 +248,7 @@ function RunModal({ agent, onClose }: { agent: Agent | null; onClose: () => void
           )}
         </div>
 
-        {status !== 'loading' && (
+        {(status === 'done' || status === 'error') && (
           <div style={{ padding: '0 20px 20px' }}>
             <button onClick={onClose} style={{ width: '100%', padding: '10px 0', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: '#64748b', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
               onMouseEnter={e => { e.currentTarget.style.color = '#f1f5f9'; e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
