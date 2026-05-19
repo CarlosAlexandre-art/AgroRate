@@ -63,47 +63,20 @@ export async function GET(req: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { supabaseId: userId },
-      include: { properties: { take: 1 } },
+      include: { properties: { take: 1, select: { id: true, sizeHectares: true } } },
     })
 
     const property = user?.properties[0]
-
-    if (!property?.lat || !property?.lng) {
-      return NextResponse.json({
-        territorialScore: null,
-        bonus: 0,
-        hasCoords: false,
-        message: 'Configure a localização da sua propriedade no SmartAgroOS para ativar a validação satelital.',
-      })
+    if (!property) {
+      return NextResponse.json({ territorialScore: null, bonus: 0, hasCoords: false, message: 'Propriedade não encontrada.' })
     }
 
-    const ftwApiUrl = process.env.FTW_API_URL
-    if (ftwApiUrl) {
-      try {
-        const r = 0.05
-        const bbox = `${Number(property.lng) - r},${Number(property.lat) - r},${Number(property.lng) + r},${Number(property.lat) + r}`
-        const res = await fetch(`${ftwApiUrl}/v1/fields?bbox=${bbox}&limit=100`, {
-          signal: AbortSignal.timeout(10000),
-        })
-        if (res.ok) {
-          const data = await res.json()
-          const features = data.features ?? []
-          const detectedHa = features.reduce((s: number, f: { properties: { area_ha: number } }) => s + (f.properties?.area_ha ?? 0), 0)
-          const avgNdvi = features.length
-            ? features.reduce((s: number, f: { properties: { ndvi: number } }) => s + (f.properties?.ndvi ?? 0), 0) / features.length
-            : 0.5
-          return NextResponse.json(analyzeTerritorial(Number(property.lat), Number(property.lng), Number(property.sizeHectares ?? detectedHa)))
-        }
-      } catch {
-        // fallthrough to demo
-      }
-    }
+    const ha = Number(property.sizeHectares ?? 50)
 
-    return NextResponse.json(analyzeTerritorial(
-      Number(property.lat),
-      Number(property.lng),
-      Number(property.sizeHectares ?? 50),
-    ))
+    // Seed determinístico pelo ID da propriedade (sem precisar de coordenadas)
+    const seed = property.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+
+    return NextResponse.json(analyzeTerritorial(seed * 0.01, seed * 0.007, ha))
   } catch (e) {
     console.error(e)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
