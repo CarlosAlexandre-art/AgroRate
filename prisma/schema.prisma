@@ -111,6 +111,11 @@ model Property {
   creditRequests CreditRequest[]
   commissions    Commission[]
   documents      PropertyDocument[]
+  loanContracts  LoanContract[]
+  garantias      Garantia[]
+  certidoes      Certidao[]
+  shares         PropertyShare[]
+  creditPlans    CreditPlan[]
   createdAt      DateTime        @default(now())
 }
 
@@ -456,4 +461,103 @@ model BankConsent {
 
   @@unique([userId, institution])
   @@index([userId])
+}
+
+// ─── Contratos de Crédito ────────────────────────────────────────────────────
+
+model LoanContract {
+  id              String    @id @default(uuid())
+  propertyId      String
+  property        Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  banco           String
+  linha           String
+  valor           Decimal
+  taxaAnual       Decimal   @default(0)
+  prazo           Int
+  dataContratacao DateTime
+  dataVencimento  DateTime?
+  valorParcela    Decimal?
+  parcelasPagas   Int       @default(0)
+  status          String    @default("ATIVO")
+  observacoes     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([propertyId])
+}
+
+// ─── Garantias ───────────────────────────────────────────────────────────────
+
+model Garantia {
+  id            String    @id @default(uuid())
+  propertyId    String
+  property      Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tipo          String
+  descricao     String
+  valorEstimado Decimal?
+  identificador String?
+  vinculado     String?
+  status        String    @default("DISPONIVEL")
+  dataVinculo   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([propertyId])
+}
+
+// ─── Certidões Fiscais ───────────────────────────────────────────────────────
+
+model Certidao {
+  id          String    @id @default(uuid())
+  propertyId  String
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tipo        String
+  numero      String?
+  emissao     DateTime?
+  validade    DateTime?
+  status      String    @default("PENDENTE")
+  fileUrl     String?
+  observacoes String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([propertyId])
+}
+
+// ─── Compartilhamento (Acesso Contador) ──────────────────────────────────────
+
+model PropertyShare {
+  id          String    @id @default(uuid())
+  propertyId  String
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  email       String
+  nome        String?
+  role        String    @default("VISUALIZADOR")
+  inviteToken String    @unique @default(uuid())
+  invitedAt   DateTime  @default(now())
+  acceptedAt  DateTime?
+  status      String    @default("PENDING")
+
+  @@unique([propertyId, email])
+  @@index([propertyId])
+}
+
+// ─── Planner de Crédito ──────────────────────────────────────────────────────
+
+model CreditPlan {
+  id               String    @id @default(uuid())
+  propertyId       String
+  property         Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  safra            String
+  cultura          String?
+  areaHectares     Decimal?
+  necessidades     String?
+  totalNecessidade Decimal?
+  observacoes      String?
+  status           String    @default("RASCUNHO")
+  iaAnalise        String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([propertyId])
 }
