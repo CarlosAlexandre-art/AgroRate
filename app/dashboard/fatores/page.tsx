@@ -18,6 +18,22 @@ interface ScoreData {
   dataCompleteness: number
 }
 
+interface TerritorialData {
+  territorialScore: number | null
+  bonus: number
+  hasCoords: boolean
+  detectedFields?: number
+  detectedHa?: number
+  declaredHa?: number
+  matchRatio?: number
+  avgNdvi?: number
+  avgConf?: number
+  ndviLabel?: string
+  ndviColor?: string
+  source?: string
+  message?: string
+}
+
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)
 
@@ -86,14 +102,19 @@ const BONUS = [
 export default function FatoresPage() {
   const [data, setData] = useState<ScoreData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [territorial, setTerritorial] = useState<TerritorialData | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session?.user) return
       try {
-        const res = await fetch(`/api/agrorate/score?userId=${session.user.id}`)
-        if (res.ok) setData(await res.json())
+        const [scoreRes, terrRes] = await Promise.all([
+          fetch(`/api/agrorate/score?userId=${session.user.id}`),
+          fetch(`/api/agrorate/score-territorial?userId=${session.user.id}`),
+        ])
+        if (scoreRes.ok) setData(await scoreRes.json())
+        if (terrRes.ok) setTerritorial(await terrRes.json())
       } finally {
         setLoading(false)
       }
@@ -209,6 +230,98 @@ export default function FatoresPage() {
                 })}
               </div>
             </div>
+
+            {/* Score Territorial Satelital */}
+            {territorial && (
+              <div>
+                <div className="text-xs font-bold tracking-widest text-slate-500 uppercase mb-3">Validação Territorial Satelital</div>
+                {!territorial.hasCoords ? (
+                  <div className="rounded-2xl p-5 border flex items-start gap-4"
+                    style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)' }}>
+                      <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white mb-1">Localização não configurada</div>
+                      <p className="text-xs text-slate-500">{territorial.message}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl p-5 border"
+                    style={{ background: 'rgba(52,211,153,0.04)', borderColor: 'rgba(52,211,153,0.15)', boxShadow: '0 0 40px rgba(52,211,153,0.04)' }}>
+                    <div className="flex items-start gap-4 mb-5">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.25)' }}>
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#34d399" strokeWidth={1.8}>
+                          <circle cx="11" cy="11" r="4"/><path strokeLinecap="round" d="M11 7V4M11 18v-3M7 11H4M18 11h-3M8.4 8.4 6.3 6.3M15.6 15.6l-2.1-2.1M15.6 8.4l2.1-2.1M8.4 15.6 6.3 17.7" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="text-sm font-bold text-white">Score Territorial</span>
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                            style={{ background: 'rgba(52,211,153,0.15)', color: '#34d399' }}>
+                            FTW · Sentinel-2
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500">Validação satelital da atividade produtiva via detecção automática de campos agrícolas</p>
+                      </div>
+                      <div className="flex-shrink-0 text-right">
+                        <div className="text-2xl font-black" style={{ color: '#34d399' }}>{territorial.territorialScore}</div>
+                        <div className="text-xs text-slate-500">de 100</div>
+                        <div className="text-xs font-bold mt-0.5" style={{ color: '#34d399' }}>+{territorial.bonus} pts</div>
+                      </div>
+                    </div>
+
+                    {/* Score bar */}
+                    <div className="h-2 rounded-full overflow-hidden mb-4" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                      <div className="h-full rounded-full transition-all duration-1000"
+                        style={{
+                          width: `${territorial.territorialScore ?? 0}%`,
+                          background: 'linear-gradient(90deg, #34d399aa, #34d399)',
+                          boxShadow: '0 0 8px rgba(52,211,153,0.6)',
+                        }} />
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                        <div className="text-xl font-black mb-0.5" style={{ color: '#34d399' }}>
+                          {territorial.detectedFields}
+                        </div>
+                        <div className="text-[10px] text-slate-500">Campos detect.</div>
+                      </div>
+                      <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                        <div className="text-xl font-black mb-0.5" style={{ color: '#6ee7b7' }}>
+                          {territorial.detectedHa} ha
+                        </div>
+                        <div className="text-[10px] text-slate-500">Área detectada</div>
+                      </div>
+                      <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                        <div className="text-xl font-black mb-0.5" style={{ color: territorial.ndviColor }}>
+                          {territorial.avgNdvi?.toFixed(2)}
+                        </div>
+                        <div className="text-[10px] text-slate-500">NDVI · {territorial.ndviLabel}</div>
+                      </div>
+                      <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                        <div className="text-xl font-black mb-0.5" style={{ color: '#a7f3d0' }}>
+                          {((territorial.matchRatio ?? 0) * 100).toFixed(0)}%
+                        </div>
+                        <div className="text-[10px] text-slate-500">Conformidade</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 text-[10px] text-slate-600 flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
+                      {territorial.source}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Dados Financeiros */}
             <div>
