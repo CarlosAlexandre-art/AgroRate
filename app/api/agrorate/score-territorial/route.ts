@@ -55,6 +55,25 @@ function analyzeTerritorial(lat: number, lng: number, declaredHa: number) {
   }
 }
 
+async function fetchCoordsFromAgroOS(supabaseId: string): Promise<{ lat: number; lng: number; ha?: number } | null> {
+  const agrOOSUrl = process.env.AGROOS_URL
+  const secret = process.env.AGROOS_INTERNAL_SECRET
+  if (!agrOOSUrl || !secret) return null
+
+  try {
+    const res = await fetch(
+      `${agrOOSUrl}/api/internal/property-coords?supabaseId=${encodeURIComponent(supabaseId)}`,
+      { headers: { 'x-internal-secret': secret }, next: { revalidate: 0 } }
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    if (!data.hasCoords) return null
+    return { lat: data.lat, lng: data.lng, ha: data.ha }
+  } catch {
+    return null
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
@@ -73,9 +92,15 @@ export async function GET(req: NextRequest) {
 
     const ha = Number(property.sizeHectares ?? 50)
 
-    // Seed determinístico pelo ID da propriedade (sem precisar de coordenadas)
-    const seed = property.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+    // Tentar coordenadas reais do SmartAgroOS; fallback para seed determinístico
+    const coords = await fetchCoordsFromAgroOS(userId)
+    if (coords) {
+      const result = analyzeTerritorial(coords.lat, coords.lng, coords.ha ?? ha)
+      return NextResponse.json({ ...result, source: 'FTW Sentinel-2 · Coordenadas Reais' })
+    }
 
+    // Fallback: seed determinístico pelo ID da propriedade
+    const seed = property.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
     return NextResponse.json(analyzeTerritorial(seed * 0.01, seed * 0.007, ha))
   } catch (e) {
     console.error(e)

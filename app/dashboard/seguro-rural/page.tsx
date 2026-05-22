@@ -213,7 +213,7 @@ export default function SeguroRuralPage() {
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                 {[
                   { label: 'Prêmio total', val: fmt(premioBase), color: '#f87171' },
                   { label: `Subvenção ${fmtPct(subvencao)}`, val: fmt(premioBase - premioSubvenc), color: '#34d399' },

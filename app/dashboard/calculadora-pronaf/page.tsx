@@ -166,7 +166,7 @@ export default function CalculadoraPRONAFPage() {
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
                   { label: 'Taxa mensal', val: fmtPct(linha.taxa), color: '#34d399' },
                   { label: 'Taxa anual', val: fmtPct(taxaAnual), color: '#60a5fa' },
@@ -195,7 +195,7 @@ export default function CalculadoraPRONAFPage() {
             <div className="rounded-2xl border overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.07)' }}>
               <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Comparar linhas</div>
-                <div className="flex gap-1">
+                <div className="flex flex-wrap gap-1">
                   {['todos', 'Pronaf', 'Pronamp', 'Investimento', 'Fintech'].map(p => (
                     <button key={p} onClick={() => setFiltroPerfi(p)}
                       className="text-xs px-2 py-0.5 rounded-lg font-medium transition-colors"

@@ -155,8 +155,12 @@ export default function ConfigPage() {
   }
 
   async function handleEnablePush() {
-    if (!('Notification' in window) || !('serviceWorker' in navigator) || !process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
-      setPushMsg({ ok: false, text: 'Push não disponível neste navegador.' })
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+      setPushMsg({ ok: false, text: 'Seu navegador não suporta notificações push.' })
+      return
+    }
+    if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+      setPushMsg({ ok: false, text: 'Notificações push ainda não ativadas neste ambiente.' })
       return
     }
     setPushLoading(true)
