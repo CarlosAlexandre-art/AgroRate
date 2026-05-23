@@ -22,7 +22,11 @@ export default function EsqueciSenhaPage() {
     })
 
     if (err) {
-      setError('Não foi possível enviar o e-mail. Verifique o endereço e tente novamente.')
+      if (err.message?.includes('60 seconds') || err.status === 429) {
+        setError('Aguarde 1 minuto antes de solicitar outro link.')
+      } else {
+        setError(err.message || 'Não foi possível enviar o e-mail. Verifique o endereço e tente novamente.')
+      }
       setLoading(false)
       return
     }
