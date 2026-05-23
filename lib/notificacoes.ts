@@ -7,7 +7,7 @@ let _vapidSet = false
 function getWebPush() {
   if (!_vapidSet && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
     webpush.setVapidDetails(
-      'mailto:suporte@agrorate.com.br',
+      'mailto:suporte@oryonag.com.br',
       process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
       process.env.VAPID_PRIVATE_KEY
     )
