@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nenhuma assinatura ativa.' }, { status: 400 })
     }
 
-    const origin = request.headers.get('origin') ?? 'https://agrorate.vercel.app'
+    const origin = request.headers.get('origin') ?? 'https://agrorate.app'
 
     const session = await stripe.billingPortal.sessions.create({
       customer: dbUser.stripeCustomerId,

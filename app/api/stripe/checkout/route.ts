@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
     if (!dbUser) return NextResponse.json({ error: 'Usuário não encontrado.' }, { status: 404 })
 
-    const origin = request.headers.get('origin') ?? 'https://agrorate.vercel.app'
+    const origin = request.headers.get('origin') ?? 'https://agrorate.app'
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',

@@ -6,6 +6,7 @@ import PwaInstall from '@/components/PwaInstall'
 const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat' })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://agrorate.app'),
   title: 'AgroRate — Crédito Rural Baseado na Sua Produção',
   description: 'Score de crédito inteligente para produtores rurais. Sua produção vira garantia.',
   icons: {
