@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LogoWhite from '@/components/LogoWhite'
+import GoogleButton from '@/components/GoogleButton'
 
 export default function CadastroPage() {
   const [name, setName] = useState('')
@@ -161,8 +162,14 @@ export default function CadastroPage() {
             </p>
           </form>
 
-          <div className="mt-5 pt-4 border-t border-slate-100 text-center">
-            <p className="text-sm text-slate-500">
+          <div className="pt-4 border-t border-slate-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-slate-100" />
+              <span className="text-xs text-slate-300">ou cadastre com</span>
+              <div className="flex-1 h-px bg-slate-100" />
+            </div>
+            <GoogleButton label="Cadastrar com Google" />
+            <p className="text-center text-sm text-slate-500 mt-4">
               Já tem conta?{' '}
               <Link href="/login" className="font-semibold text-[#065f46] hover:underline">
                 Entrar

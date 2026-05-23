@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LogoWhite from '@/components/LogoWhite'
+import GoogleButton from '@/components/GoogleButton'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -108,16 +109,28 @@ export default function LoginPage() {
                 </span>
               ) : 'Entrar'}
             </button>
+
+            <div className="text-right">
+              <Link href="/esqueci-senha" className="text-xs text-slate-400 hover:text-[#065f46] transition-colors">
+                Esqueci minha senha
+              </Link>
+            </div>
           </form>
 
-          {/* Divisor */}
           <div className="my-5 flex items-center gap-3">
             <div className="flex-1 h-px bg-slate-100" />
             <span className="text-xs text-slate-300">ou</span>
             <div className="flex-1 h-px bg-slate-100" />
           </div>
 
-          {/* CTA Criar grátis — destaque */}
+          <GoogleButton />
+
+          <div className="my-4 flex items-center gap-3">
+            <div className="flex-1 h-px bg-slate-100" />
+            <span className="text-xs text-slate-300">ou</span>
+            <div className="flex-1 h-px bg-slate-100" />
+          </div>
+
           <Link href="/cadastro"
             className="flex items-center justify-center gap-2 w-full border-2 border-[#065f46] text-[#065f46] font-bold py-3.5 rounded-xl hover:bg-emerald-50 transition-all hover:-translate-y-0.5">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
