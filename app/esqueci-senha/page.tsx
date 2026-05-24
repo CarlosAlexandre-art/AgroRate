@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@supabase/supabase-js'
 import LogoWhite from '@/components/LogoWhite'
 
 export default function EsqueciSenhaPage() {
@@ -16,7 +16,11 @@ export default function EsqueciSenhaPage() {
     setLoading(true)
     setError('')
 
-    const supabase = createClient()
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!,
+      { auth: { flowType: 'implicit' } }
+    )
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/atualizar-senha`,
     })
