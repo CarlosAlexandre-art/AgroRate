@@ -52,7 +52,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const path = `${user.id}/${doc.propertyId}/${Date.now()}.${ext}`
     const bytes = await file.arrayBuffer()
     const { error } = await admin.storage.from('documents').upload(path, bytes, { contentType: file.type })
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
     const { data: { publicUrl } } = admin.storage.from('documents').getPublicUrl(path)
     fileUrl = publicUrl
     fileName = file.name

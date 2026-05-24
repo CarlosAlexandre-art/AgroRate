@@ -236,6 +236,6 @@ Gere:
       modelo: 'Regressão Linear + Sazonalidade Agrícola BR + LLaMA 3.3 70B',
     })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }
