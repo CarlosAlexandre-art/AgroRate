@@ -15,29 +15,36 @@ export default function AtualizarSenhaPage() {
   const [done, setDone] = useState(false)
   const [sessionReady, setSessionReady] = useState(false)
   const [sessionError, setSessionError] = useState('')
+  const [supabase] = useState(() => createClient())
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const code = params.get('code')
-    const supabase = createClient()
+    // Fluxo principal: servidor trocou o code em /auth/callback e gravou sessão nos cookies
 
-    if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ error: err }) => {
-        if (!err) {
-          setSessionReady(true)
-          window.history.replaceState({}, '', window.location.pathname)
-        } else {
-          console.error('[atualizar-senha] exchangeCodeForSession error:', err.message, err)
-          setSessionError(`Erro: ${err.message}`)
-        }
-      })
-    } else {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) setSessionReady(true)
-        else setSessionError('Link inválido. Solicite um novo link de recuperação.')
-      })
+    // Fallback implicit: hash com #access_token (links antigos ou clientes legacy)
+    const hash = window.location.hash
+    if (hash && hash.includes('access_token')) {
+      const p = new URLSearchParams(hash.substring(1))
+      const accessToken = p.get('access_token')
+      const refreshToken = p.get('refresh_token') ?? ''
+      if (p.get('type') === 'recovery' && accessToken) {
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+          .then(({ error: err }) => {
+            if (!err) {
+              setSessionReady(true)
+              window.history.replaceState({}, '', window.location.pathname)
+            } else {
+              setSessionError(err.message)
+            }
+          })
+        return
+      }
     }
-  }, [])
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setSessionReady(true)
+      else setSessionError('Link inválido. Solicite um novo link de recuperação.')
+    })
+  }, [supabase])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -45,7 +52,6 @@ export default function AtualizarSenhaPage() {
     if (password.length < 6) { setError('A senha deve ter pelo menos 6 caracteres.'); return }
     setLoading(true)
     setError('')
-    const supabase = createClient()
     const { error: err } = await supabase.auth.updateUser({ password })
     if (err) {
       setError('Não foi possível atualizar a senha. Tente novamente.')
