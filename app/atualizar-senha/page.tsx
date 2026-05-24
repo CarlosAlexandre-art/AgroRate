@@ -27,7 +27,8 @@ export default function AtualizarSenhaPage() {
           setSessionReady(true)
           window.history.replaceState({}, '', window.location.pathname)
         } else {
-          setSessionError('Link expirado. Solicite um novo link de recuperação.')
+          console.error('[atualizar-senha] exchangeCodeForSession error:', err.message, err)
+          setSessionError(`Erro: ${err.message}`)
         }
       })
     } else {
