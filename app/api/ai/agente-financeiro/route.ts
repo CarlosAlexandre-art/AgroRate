@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit } from '@/lib/rate-limit'
 import { prisma } from '@/lib/prisma'
 import { groqStream, Msg } from '@/lib/groq'
 
@@ -10,6 +10,12 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return new Response('Não autenticado', { status: 401 })
+
+  // Rate limit: 20 chamadas IA por hora por usuário
+  const { allowed } = rateLimit(`ai:${user.id}`, 20, 3600_000)
+  if (!allowed) {
+    return NextResponse.json({ error: 'Limite de chamadas IA atingido. Tente novamente em 1 hora.' }, { status: 429 })
+  }
 
     const { messages }: { messages: Msg[] } = await req.json()
 
