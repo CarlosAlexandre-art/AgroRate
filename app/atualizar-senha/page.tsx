@@ -18,32 +18,43 @@ export default function AtualizarSenhaPage() {
   const [supabase] = useState(() => createClient())
 
   useEffect(() => {
-    // Fluxo principal: servidor trocou o code em /auth/callback e gravou sessão nos cookies
-
-    // Fallback implicit: hash com #access_token (links antigos ou clientes legacy)
-    const hash = window.location.hash
-    if (hash && hash.includes('access_token')) {
-      const p = new URLSearchParams(hash.substring(1))
-      const accessToken = p.get('access_token')
-      const refreshToken = p.get('refresh_token') ?? ''
-      if (p.get('type') === 'recovery' && accessToken) {
-        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
-          .then(({ error: err }) => {
-            if (!err) {
-              setSessionReady(true)
-              window.history.replaceState({}, '', window.location.pathname)
-            } else {
-              setSessionError(err.message)
-            }
-          })
+    async function initSession() {
+      // 1. PKCE: ?code= na query string (Supabase v2 padrão)
+      const params = new URLSearchParams(window.location.search)
+      const code = params.get('code')
+      if (code) {
+        window.history.replaceState({}, '', window.location.pathname)
+        const { error: err } = await supabase.auth.exchangeCodeForSession(code)
+        if (!err) { setSessionReady(true); return }
+        setSessionError('Link inválido ou já utilizado. Solicite um novo.')
         return
       }
-    }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+      // 2. Implicit: #access_token no hash (links legados)
+      const hash = window.location.hash
+      if (hash.includes('access_token')) {
+        const p = new URLSearchParams(hash.substring(1))
+        const accessToken = p.get('access_token')
+        const refreshToken = p.get('refresh_token') ?? ''
+        if (p.get('type') === 'recovery' && accessToken) {
+          const { error: err } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+          if (!err) {
+            setSessionReady(true)
+            window.history.replaceState({}, '', window.location.pathname)
+          } else {
+            setSessionError('Link expirado. Solicite um novo link de recuperação.')
+          }
+          return
+        }
+      }
+
+      // 3. Sessão já existente (ex: callback server-side já trocou o code)
+      const { data: { session } } = await supabase.auth.getSession()
       if (session) setSessionReady(true)
       else setSessionError('Link inválido. Solicite um novo link de recuperação.')
-    })
+    }
+
+    initSession()
   }, [supabase])
 
   async function handleSubmit(e: React.FormEvent) {
