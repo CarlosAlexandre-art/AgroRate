@@ -9,6 +9,11 @@ export async function GET(request: Request) {
 
   if (!code) return NextResponse.redirect(`${origin}${next}`)
 
+  // Recovery: passa o code para a página cliente fazer o exchange
+  if (next === '/atualizar-senha') {
+    return NextResponse.redirect(`${origin}/atualizar-senha?code=${code}`)
+  }
+
   const cookieStore = await cookies()
   const response = NextResponse.redirect(`${origin}${next}`)
 
