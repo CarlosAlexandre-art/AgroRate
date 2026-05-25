@@ -168,7 +168,7 @@ function extrairTextoPDF(buffer: Buffer): string {
     .join(' ')
     .replace(/\s{3,}/g, '  ')
     .trim()
-    .slice(0, 12000)
+    .slice(0, 30000)
 }
 
 const PROMPT_CREDITO = `Você é um analista de crédito rural sênior com 20 anos de experiência em cooperativas e bancos agrícolas brasileiros (Banco do Brasil, Sicoob, Sicredi, Bradesco Rural).
@@ -241,11 +241,34 @@ export async function POST(req: NextRequest) {
     if (mimeType === 'application/pdf') {
       const texto = extrairTextoPDF(buffer)
       if (texto?.trim()) {
-        resultadoIA = await groq([
-          { role: 'user', content: `${PROMPT_CREDITO}\n\nTexto do documento:\n${texto.slice(0, 10000)}` },
-        ], 2048)
+        // Detecta texto garbled: PDFs modernos de bancos usam CIDFont com mapeamento
+        // personalizado — hex strings decodificam para Unicode errado
+        const amostra = texto.slice(0, 2000)
+        let exotic = 0
+        for (const ch of amostra) {
+          const c = ch.codePointAt(0) ?? 0
+          if (c > 0x2FF) exotic++  // chars além do Latin Extended-B → provável glyph ID errado
+        }
+        const garbled = amostra.length > 50 && exotic / amostra.length > 0.25
+
+        if (garbled) {
+          // Texto com encoding ruim → tenta JPEG primeiro, depois envia texto com aviso
+          const jpeg = extrairJpegDoPDF(buffer)
+          if (jpeg) {
+            resultadoIA = await analisarImagem(jpeg.toString('base64'), 'image/jpeg', PROMPT_CREDITO)
+          } else {
+            resultadoIA = await groq([{
+              role: 'user',
+              content: `${PROMPT_CREDITO}\n\nNOTA: Texto extraído de PDF com codificação de fonte especial — pode haver caracteres incorretos. Foque em padrões numéricos e monetários reconhecíveis (R$, datas dd/mm/aaaa, CPF, saldos).\n\nTexto extraído:\n${texto.slice(0, 20000)}`,
+            }], 2048)
+          }
+        } else {
+          resultadoIA = await groq([
+            { role: 'user', content: `${PROMPT_CREDITO}\n\nTexto do documento:\n${texto.slice(0, 20000)}` },
+          ], 2048)
+        }
       } else {
-        // Fallback: PDF escaneado — extrai JPEG embutido e analisa via Vision
+        // Nenhum texto extraível → tenta JPEG embutido (PDF escaneado)
         const jpeg = extrairJpegDoPDF(buffer)
         if (jpeg) {
           resultadoIA = await analisarImagem(jpeg.toString('base64'), 'image/jpeg', PROMPT_CREDITO)
