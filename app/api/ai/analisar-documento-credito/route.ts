@@ -36,16 +36,20 @@ async function analisarImagem(base64: string, mimeType: string, prompt: string):
 }
 
 async function extrairTextoPDF(buffer: Buffer): Promise<string> {
-  // Mock DOMMatrix — pdfjs-dist verifica no boot, mas não usa para extração de texto
   if (typeof (globalThis as any).DOMMatrix === 'undefined') {
     ;(globalThis as any).DOMMatrix = class {}
   }
-  // Usa pdfjs-dist/legacy diretamente (build para Node.js, sem worker, sem canvas)
   const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs' as any)
-  pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+  // pdfjs-dist v5: workerSrc precisa ser um módulo válido; usar data URL vazia desativa o worker
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `data:text/javascript,`
 
   const data = new Uint8Array(buffer)
-  const loadingTask = pdfjsLib.getDocument({ data })
+  const loadingTask = pdfjsLib.getDocument({
+    data,
+    useWorkerFetch: false,
+    isEvalSupported: false,
+    useSystemFonts: true,
+  })
   const pdf = await loadingTask.promise
   const pages: string[] = []
   for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
