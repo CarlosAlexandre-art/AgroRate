@@ -35,29 +35,46 @@ async function analisarImagem(base64: string, mimeType: string, prompt: string):
   return data.choices[0].message.content as string
 }
 
-async function extrairTextoPDF(buffer: Buffer): Promise<string> {
-  if (typeof (globalThis as any).DOMMatrix === 'undefined') {
-    ;(globalThis as any).DOMMatrix = class {}
-  }
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs' as any)
-  // pdfjs-dist v5: workerSrc precisa ser um módulo válido; usar data URL vazia desativa o worker
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `data:text/javascript,`
+// Extrator PDF minimalista puro — sem worker, sem canvas, sem dependências externas.
+// Funciona em qualquer ambiente serverless. Lê strings de texto dos operadores Tj/TJ.
+function extrairTextoPDF(buffer: Buffer): string {
+  const raw = buffer.toString('latin1')
+  const texts: string[] = []
 
-  const data = new Uint8Array(buffer)
-  const loadingTask = pdfjsLib.getDocument({
-    data,
-    useWorkerFetch: false,
-    isEvalSupported: false,
-    useSystemFonts: true,
-  })
-  const pdf = await loadingTask.promise
-  const pages: string[] = []
-  for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
-    const page = await pdf.getPage(i)
-    const content = await page.getTextContent()
-    pages.push(content.items.map((it: any) => it.str).join(' '))
+  // Encontra blocos BT...ET (begin/end text) e extrai strings Tj e TJ
+  const btEt = /BT[\s\S]*?ET/g
+  let block: RegExpExecArray | null
+  while ((block = btEt.exec(raw)) !== null) {
+    const seg = block[0]
+    // Tj: (string) Tj
+    const tj = /\(([^)\\]*(?:\\.[^)\\]*)*)\)\s*Tj/g
+    let m: RegExpExecArray | null
+    while ((m = tj.exec(seg)) !== null) texts.push(m[1])
+    // TJ: [(string -num string...) ] TJ
+    const tjArr = /\[([^\]]*)\]\s*TJ/g
+    while ((m = tjArr.exec(seg)) !== null) {
+      const inner = m[1]
+      const parts = /\(([^)\\]*(?:\\.[^)\\]*)*)\)/g
+      let p: RegExpExecArray | null
+      while ((p = parts.exec(inner)) !== null) texts.push(p[1])
+    }
   }
-  return pages.join('\n')
+
+  return texts
+    .map(t =>
+      t.replace(/\\n/g, '\n')
+       .replace(/\\r/g, '')
+       .replace(/\\t/g, ' ')
+       .replace(/\\\(/g, '(')
+       .replace(/\\\)/g, ')')
+       .replace(/\\\\/g, '\\')
+       .replace(/[^\x20-\x7E\n]/g, '')
+    )
+    .filter(t => t.trim().length > 0)
+    .join(' ')
+    .replace(/\s{3,}/g, '  ')
+    .trim()
+    .slice(0, 12000)
 }
 
 const PROMPT_CREDITO = `Você é um analista de crédito rural sênior com 20 anos de experiência em cooperativas e bancos agrícolas brasileiros (Banco do Brasil, Sicoob, Sicredi, Bradesco Rural).
