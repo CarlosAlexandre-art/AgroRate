@@ -40,7 +40,12 @@ async function extrairTextoPDF(buffer: Buffer): Promise<string> {
   if (typeof (globalThis as any).DOMMatrix === 'undefined') {
     ;(globalThis as any).DOMMatrix = class {}
   }
-  const pdfParse = (await import('pdf-parse')).default
+  const mod = await import('pdf-parse')
+  // pdf-parse é CJS: pode vir como mod.default ou como mod diretamente
+  const pdfParse: (buf: Buffer) => Promise<{ text: string }> =
+    typeof mod === 'function' ? (mod as any) :
+    typeof mod.default === 'function' ? mod.default :
+    (mod as any)
   const result = await pdfParse(buffer)
   return result.text
 }
