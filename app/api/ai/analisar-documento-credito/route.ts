@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { inflateSync } from 'zlib'
+import { inflateSync, inflateRawSync } from 'zlib'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { groq } from '@/lib/groq'
@@ -36,7 +36,6 @@ async function analisarImagem(base64: string, mimeType: string, prompt: string):
   return data.choices[0].message.content as string
 }
 
-// Extrai texto de um content stream PDF (pode ser comprimido ou não)
 function extrairDoBlocos(content: string, texts: string[]) {
   const btEt = /BT[\s\S]*?ET/g
   let block: RegExpExecArray | null
@@ -55,24 +54,64 @@ function extrairDoBlocos(content: string, texts: string[]) {
   }
 }
 
-// Extrator PDF puro — zlib nativo do Node.js descomprime streams FlateDecode.
-// Zero dependências externas, funciona em qualquer ambiente serverless.
+// Extrai o primeiro JPEG grande embutido no PDF (documentos escaneados)
+function extrairJpegDoPDF(buffer: Buffer): Buffer | null {
+  const SOI = Buffer.from([0xFF, 0xD8, 0xFF])
+  let pos = 0
+  while (pos < buffer.length - 3) {
+    const start = buffer.indexOf(SOI, pos)
+    if (start === -1) break
+    for (let i = start + 200; i < buffer.length - 1; i++) {
+      if (buffer[i] === 0xFF && buffer[i + 1] === 0xD9) {
+        if (i + 2 - start > 50_000) return buffer.slice(start, i + 2)
+        break
+      }
+    }
+    pos = start + 1
+  }
+  return null
+}
+
+// Extrator PDF puro — usa Buffer.indexOf para encontrar streams com precisão binária.
+// Tenta inflateSync (zlib) e inflateRawSync (deflate sem header) para cada stream.
 function extrairTextoPDF(buffer: Buffer): string {
-  const raw = buffer.toString('binary')
   const texts: string[] = []
 
-  // 1. Tentar extrair direto (PDFs não comprimidos)
-  extrairDoBlocos(Buffer.from(raw, 'binary').toString('latin1'), texts)
+  // Pass 1: PDFs sem compressão
+  extrairDoBlocos(buffer.toString('latin1'), texts)
 
-  // 2. Descomprimir streams FlateDecode (a maioria dos PDFs modernos)
-  const streamRe = /stream\r?\n([\s\S]*?)\r?\nendstream/g
-  let sm: RegExpExecArray | null
-  while ((sm = streamRe.exec(raw)) !== null) {
-    try {
-      const compressed = Buffer.from(sm[1], 'binary')
-      const decompressed = inflateSync(compressed).toString('latin1')
-      extrairDoBlocos(decompressed, texts)
-    } catch { /* stream não é zlib, ignora */ }
+  // Pass 2: FlateDecode streams (Buffer.indexOf é mais confiável que regex em dados binários)
+  const STREAM_LF   = Buffer.from('stream\n')
+  const STREAM_CRLF = Buffer.from('stream\r\n')
+  const ENDSTREAM   = Buffer.from('\nendstream')
+
+  let pos = 0
+  while (pos < buffer.length) {
+    const i1 = buffer.indexOf(STREAM_CRLF, pos)
+    const i2 = buffer.indexOf(STREAM_LF,   pos)
+
+    let streamStart = -1
+    if (i1 === -1 && i2 === -1) break
+    else if (i1 === -1)       streamStart = i2 + STREAM_LF.length
+    else if (i2 === -1)       streamStart = i1 + STREAM_CRLF.length
+    else if (i1 <= i2)        streamStart = i1 + STREAM_CRLF.length
+    else                      streamStart = i2 + STREAM_LF.length
+
+    const endIdx = buffer.indexOf(ENDSTREAM, streamStart)
+    if (endIdx === -1) break
+
+    const streamBuf = buffer.slice(streamStart, endIdx)
+    pos = endIdx + ENDSTREAM.length
+
+    if (streamBuf.length < 10) continue
+
+    // Tenta zlib inflate (mais comum) e raw inflate (deflate sem cabeçalho zlib)
+    for (const decompress of [inflateSync, inflateRawSync]) {
+      try {
+        extrairDoBlocos(decompress(streamBuf).toString('latin1'), texts)
+        break
+      } catch { }
+    }
   }
 
   return texts
@@ -160,13 +199,22 @@ export async function POST(req: NextRequest) {
     let resultadoIA: string
 
     if (mimeType === 'application/pdf') {
-      const texto = await extrairTextoPDF(buffer)
-      if (!texto?.trim()) {
-        return NextResponse.json({ error: 'Não foi possível extrair texto do PDF' }, { status: 422 })
+      const texto = extrairTextoPDF(buffer)
+      if (texto?.trim()) {
+        resultadoIA = await groq([
+          { role: 'user', content: `${PROMPT_CREDITO}\n\nTexto do documento:\n${texto.slice(0, 10000)}` },
+        ], 2048)
+      } else {
+        // Fallback: PDF digitalizado — extrair JPEG embutido e analisar via Vision
+        const jpeg = extrairJpegDoPDF(buffer)
+        if (jpeg) {
+          resultadoIA = await analisarImagem(jpeg.toString('base64'), 'image/jpeg', PROMPT_CREDITO)
+        } else {
+          return NextResponse.json({
+            error: 'Não foi possível extrair o conteúdo do PDF. Tente converter para imagem (JPG/PNG) e envie novamente.',
+          }, { status: 422 })
+        }
       }
-      resultadoIA = await groq([
-        { role: 'user', content: `${PROMPT_CREDITO}\n\nTexto do documento:\n${texto.slice(0, 10000)}` },
-      ], 2048)
     } else if (mimeType.startsWith('image/')) {
       const base64 = buffer.toString('base64')
       resultadoIA = await analisarImagem(base64, mimeType, PROMPT_CREDITO)
