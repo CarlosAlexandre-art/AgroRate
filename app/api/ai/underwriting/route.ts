@@ -12,11 +12,10 @@ export async function GET() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-  // Rate limit: 20 chamadas IA por hora por usuário
-  const { allowed } = rateLimit(`ai:${user.id}`, 20, 3600_000)
-  if (!allowed) {
-    return NextResponse.json({ error: 'Limite de chamadas IA atingido. Tente novamente em 1 hora.' }, { status: 429 })
-  }
+    const { allowed } = rateLimit(`ai:${authUser.id}`, 20, 3600_000)
+    if (!allowed) {
+      return NextResponse.json({ error: 'Limite de chamadas IA atingido. Tente novamente em 1 hora.' }, { status: 429 })
+    }
 
     const user = await prisma.user.findUnique({
       where: { supabaseId: authUser.id },
