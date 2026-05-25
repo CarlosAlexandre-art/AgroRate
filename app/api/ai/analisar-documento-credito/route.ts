@@ -36,6 +36,10 @@ async function analisarImagem(base64: string, mimeType: string, prompt: string):
 }
 
 async function extrairTextoPDF(buffer: Buffer): Promise<string> {
+  // canvas inicializa DOMMatrix ao carregar no Node — mock mínimo para não crashear
+  if (typeof (globalThis as any).DOMMatrix === 'undefined') {
+    ;(globalThis as any).DOMMatrix = class {}
+  }
   const pdfParse = (await import('pdf-parse')).default
   const result = await pdfParse(buffer)
   return result.text
