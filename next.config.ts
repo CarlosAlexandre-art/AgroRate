@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  webpack: (config) => {
+    // pdf-parse puxa canvas como dependência opcional — canvas usa DOMMatrix (browser-only)
+    // Diz ao webpack para não tentar bundlar canvas no servidor
+    config.resolve.alias['canvas'] = false
+    return config
+  },
   async headers() {
     return [
       {
