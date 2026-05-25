@@ -36,51 +36,91 @@ async function analisarImagem(base64: string, mimeType: string, prompt: string):
   return data.choices[0].message.content as string
 }
 
+// Decodifica hex string PDF: suporta UTF-16BE (CIDFont moderno) e byte único (legado)
+function hexToText(hex: string): string {
+  if (hex.length >= 4 && hex.length % 4 === 0) {
+    let r = ''
+    for (let i = 0; i < hex.length; i += 4) {
+      const c = parseInt(hex.slice(i, i + 4), 16)
+      if (c >= 0x20 && c < 0xFFFE) r += String.fromCodePoint(c)
+    }
+    if (r.replace(/\s/g, '').length > 0) return r
+  }
+  let r = ''
+  for (let i = 0; i < hex.length; i += 2) {
+    const c = parseInt(hex.slice(i, i + 2), 16)
+    if (c >= 0x20 && c < 0xFF) r += String.fromCharCode(c)
+  }
+  return r
+}
+
+// Extrai texto de blocos BT/ET: parenthesized strings E hex strings (bancos/governo BR)
 function extrairDoBlocos(content: string, texts: string[]) {
   const btEt = /BT[\s\S]*?ET/g
   let block: RegExpExecArray | null
   while ((block = btEt.exec(content)) !== null) {
     const seg = block[0]
-    const tj = /\(([^)\\]*(?:\\.[^)\\]*)*)\)\s*Tj/g
     let m: RegExpExecArray | null
+
+    // (text) Tj
+    const tj = /\(([^)\\]*(?:\\.[^)\\]*)*)\)\s*Tj/g
     while ((m = tj.exec(seg)) !== null) texts.push(m[1])
+
+    // <HEX> Tj  — UTF-16BE ou byte único (PDFs modernos com CIDFont)
+    const tjHex = /<([0-9A-Fa-f]{2,})>\s*Tj/g
+    while ((m = tjHex.exec(seg)) !== null) {
+      const t = hexToText(m[1])
+      if (t.trim()) texts.push(t)
+    }
+
+    // [...] TJ
     const tjArr = /\[([^\]]*)\]\s*TJ/g
     while ((m = tjArr.exec(seg)) !== null) {
       const inner = m[1]
-      const parts = /\(([^)\\]*(?:\\.[^)\\]*)*)\)/g
       let p: RegExpExecArray | null
-      while ((p = parts.exec(inner)) !== null) texts.push(p[1])
+      const paren = /\(([^)\\]*(?:\\.[^)\\]*)*)\)/g
+      while ((p = paren.exec(inner)) !== null) texts.push(p[1])
+      const hexP = /<([0-9A-Fa-f]{2,})>/g
+      while ((p = hexP.exec(inner)) !== null) {
+        const t = hexToText(p[1])
+        if (t.trim()) texts.push(t)
+      }
     }
   }
 }
 
-// Extrai o primeiro JPEG grande embutido no PDF (documentos escaneados)
+// Extrai o maior JPEG embutido no PDF (PDFs escaneados com filtro DCTDecode)
 function extrairJpegDoPDF(buffer: Buffer): Buffer | null {
   const SOI = Buffer.from([0xFF, 0xD8, 0xFF])
   let pos = 0
+  let best: Buffer | null = null
+
   while (pos < buffer.length - 3) {
     const start = buffer.indexOf(SOI, pos)
     if (start === -1) break
-    for (let i = start + 200; i < buffer.length - 1; i++) {
+
+    // Busca o EOI correspondente a este SOI (scan forward até achar 0xFF 0xD9)
+    for (let i = start + 500; i < buffer.length - 1; i++) {
       if (buffer[i] === 0xFF && buffer[i + 1] === 0xD9) {
-        if (i + 2 - start > 50_000) return buffer.slice(start, i + 2)
+        const candidate = buffer.slice(start, i + 2)
+        if (!best || candidate.length > best.length) best = candidate
         break
       }
     }
     pos = start + 1
   }
-  return null
+
+  return best && best.length > 5_000 ? best : null
 }
 
-// Extrator PDF puro — usa Buffer.indexOf para encontrar streams com precisão binária.
-// Tenta inflateSync (zlib) e inflateRawSync (deflate sem header) para cada stream.
+// Extrator PDF puro — zero dependências externas, funciona em qualquer serverless
 function extrairTextoPDF(buffer: Buffer): string {
   const texts: string[] = []
 
-  // Pass 1: PDFs sem compressão
+  // Pass 1: streams sem compressão (PDFs legados)
   extrairDoBlocos(buffer.toString('latin1'), texts)
 
-  // Pass 2: FlateDecode streams (Buffer.indexOf é mais confiável que regex em dados binários)
+  // Pass 2: FlateDecode via Buffer.indexOf (mais confiável que regex em dados binários)
   const STREAM_LF   = Buffer.from('stream\n')
   const STREAM_CRLF = Buffer.from('stream\r\n')
   const ENDSTREAM   = Buffer.from('\nendstream')
@@ -91,11 +131,11 @@ function extrairTextoPDF(buffer: Buffer): string {
     const i2 = buffer.indexOf(STREAM_LF,   pos)
 
     let streamStart = -1
-    if (i1 === -1 && i2 === -1) break
-    else if (i1 === -1)       streamStart = i2 + STREAM_LF.length
-    else if (i2 === -1)       streamStart = i1 + STREAM_CRLF.length
-    else if (i1 <= i2)        streamStart = i1 + STREAM_CRLF.length
-    else                      streamStart = i2 + STREAM_LF.length
+    if      (i1 === -1 && i2 === -1) break
+    else if (i1 === -1)              streamStart = i2 + STREAM_LF.length
+    else if (i2 === -1)              streamStart = i1 + STREAM_CRLF.length
+    else if (i1 <= i2)               streamStart = i1 + STREAM_CRLF.length
+    else                             streamStart = i2 + STREAM_LF.length
 
     const endIdx = buffer.indexOf(ENDSTREAM, streamStart)
     if (endIdx === -1) break
@@ -105,7 +145,7 @@ function extrairTextoPDF(buffer: Buffer): string {
 
     if (streamBuf.length < 10) continue
 
-    // Tenta zlib inflate (mais comum) e raw inflate (deflate sem cabeçalho zlib)
+    // Tenta zlib inflate (header zlib) e raw inflate (deflate sem header)
     for (const decompress of [inflateSync, inflateRawSync]) {
       try {
         extrairDoBlocos(decompress(streamBuf).toString('latin1'), texts)
@@ -122,7 +162,7 @@ function extrairTextoPDF(buffer: Buffer): string {
        .replace(/\\\(/g, '(')
        .replace(/\\\)/g, ')')
        .replace(/\\\\/g, '\\')
-       .replace(/[^\x20-\x7E\n]/g, '')
+       .replace(/[\x00-\x08\x0E-\x1F\x7F\x80-\x9F]/g, '') // remove control chars, preserva Latin-1 e Unicode
     )
     .filter(t => t.trim().length > 1)
     .join(' ')
@@ -179,11 +219,11 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-  // Rate limit: 20 chamadas IA por hora por usuário
-  const { allowed } = rateLimit(`ai:${user.id}`, 20, 3600_000)
-  if (!allowed) {
-    return NextResponse.json({ error: 'Limite de chamadas IA atingido. Tente novamente em 1 hora.' }, { status: 429 })
-  }
+    // Rate limit: 20 chamadas IA por hora por usuário
+    const { allowed } = rateLimit(`ai:${user.id}`, 20, 3600_000)
+    if (!allowed) {
+      return NextResponse.json({ error: 'Limite de chamadas IA atingido. Tente novamente em 1 hora.' }, { status: 429 })
+    }
 
     const formData = await req.formData()
     const file = formData.get('documento') as File | null
@@ -205,7 +245,7 @@ export async function POST(req: NextRequest) {
           { role: 'user', content: `${PROMPT_CREDITO}\n\nTexto do documento:\n${texto.slice(0, 10000)}` },
         ], 2048)
       } else {
-        // Fallback: PDF digitalizado — extrair JPEG embutido e analisar via Vision
+        // Fallback: PDF escaneado — extrai JPEG embutido e analisa via Vision
         const jpeg = extrairJpegDoPDF(buffer)
         if (jpeg) {
           resultadoIA = await analisarImagem(jpeg.toString('base64'), 'image/jpeg', PROMPT_CREDITO)
