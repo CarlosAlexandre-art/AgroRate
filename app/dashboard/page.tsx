@@ -109,12 +109,18 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [predicao, setPredicao] = useState<any>(null)
   const [loadingPredicao, setLoadingPredicao] = useState(false)
+  const [erroPredicao, setErroPredicao] = useState<string | null>(null)
 
   async function carregarPredicao() {
     setLoadingPredicao(true)
+    setErroPredicao(null)
     try {
       const res = await fetch('/api/ai/score-predicao')
-      if (res.ok) setPredicao(await res.json())
+      const json = await res.json()
+      if (res.ok) setPredicao(json)
+      else setErroPredicao(json.error || `Erro ${res.status}`)
+    } catch (e) {
+      setErroPredicao('Falha de conexão com a API')
     } finally {
       setLoadingPredicao(false)
     }
@@ -281,6 +287,11 @@ export default function DashboardPage() {
             {loadingPredicao ? '⏳ Analisando...' : '⚡ Prever'}
           </button>
         </div>
+        {erroPredicao && (
+          <div className="px-5 py-3 text-sm text-red-600 bg-red-50 border-t border-red-100">
+            ⚠️ {erroPredicao}
+          </div>
+        )}
         {predicao && (
           <div className="p-5 space-y-4">
             {/* Tendência + previsão 30/60/90 */}
