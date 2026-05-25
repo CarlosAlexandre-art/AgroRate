@@ -1,7 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { createClient } from '@/lib/supabase/server'
 import { getAgrocoreData, calcAgrocoreBonus } from '@/lib/prisma-agrocore'
 import { NotificacoesAgroRate } from '@/lib/notificacoes'
+
+// Resolve o User no banco pelo supabaseId, com fallback por email para contas Google OAuth
+async function resolveUser(supabaseId: string) {
+  let user = await prisma.user.findUnique({
+    where: { supabaseId },
+    include: { properties: { take: 1 } },
+  })
+  if (user) return user
+
+  // Fallback: buscar pelo email via Supabase auth e vincular a conta
+  try {
+    const supabase = await createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (authUser?.email) {
+      const byEmail = await prisma.user.findUnique({
+        where: { email: authUser.email },
+        include: { properties: { take: 1 } },
+      })
+      if (byEmail) {
+        // Atualiza o supabaseId para vincular Google OAuth à conta existente
+        user = await prisma.user.update({
+          where: { email: authUser.email },
+          data: { supabaseId },
+          include: { properties: { take: 1 } },
+        })
+        return user
+      }
+    }
+  } catch { /* fallback silencioso */ }
+
+  return null
+}
 
 // 60% fazenda (SmartAgroOS+AgroCore), 20% perfil, 10% documentação, 10% bônus externos
 const WEIGHTS = { production: 0.40, efficiency: 0.20, behavior: 0.20, operational: 0.10 }
@@ -100,10 +133,7 @@ export async function GET(request: NextRequest) {
     let targetPropertyId = propertyId
 
     if (!propertyId && userId) {
-      const user = await prisma.user.findUnique({
-        where: { supabaseId: userId },
-        include: { properties: { take: 1 } },
-      })
+      const user = await resolveUser(userId)
       if (!user || user.properties.length === 0) {
         return NextResponse.json({ error: 'Nenhuma propriedade encontrada. Configure sua fazenda no SmartAgroOS.' }, { status: 404 })
       }
