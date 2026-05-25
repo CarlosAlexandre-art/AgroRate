@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { inflateSync } from 'zlib'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { groq } from '@/lib/groq'
@@ -35,22 +36,15 @@ async function analisarImagem(base64: string, mimeType: string, prompt: string):
   return data.choices[0].message.content as string
 }
 
-// Extrator PDF minimalista puro — sem worker, sem canvas, sem dependências externas.
-// Funciona em qualquer ambiente serverless. Lê strings de texto dos operadores Tj/TJ.
-function extrairTextoPDF(buffer: Buffer): string {
-  const raw = buffer.toString('latin1')
-  const texts: string[] = []
-
-  // Encontra blocos BT...ET (begin/end text) e extrai strings Tj e TJ
+// Extrai texto de um content stream PDF (pode ser comprimido ou não)
+function extrairDoBlocos(content: string, texts: string[]) {
   const btEt = /BT[\s\S]*?ET/g
   let block: RegExpExecArray | null
-  while ((block = btEt.exec(raw)) !== null) {
+  while ((block = btEt.exec(content)) !== null) {
     const seg = block[0]
-    // Tj: (string) Tj
     const tj = /\(([^)\\]*(?:\\.[^)\\]*)*)\)\s*Tj/g
     let m: RegExpExecArray | null
     while ((m = tj.exec(seg)) !== null) texts.push(m[1])
-    // TJ: [(string -num string...) ] TJ
     const tjArr = /\[([^\]]*)\]\s*TJ/g
     while ((m = tjArr.exec(seg)) !== null) {
       const inner = m[1]
@@ -58,6 +52,27 @@ function extrairTextoPDF(buffer: Buffer): string {
       let p: RegExpExecArray | null
       while ((p = parts.exec(inner)) !== null) texts.push(p[1])
     }
+  }
+}
+
+// Extrator PDF puro — zlib nativo do Node.js descomprime streams FlateDecode.
+// Zero dependências externas, funciona em qualquer ambiente serverless.
+function extrairTextoPDF(buffer: Buffer): string {
+  const raw = buffer.toString('binary')
+  const texts: string[] = []
+
+  // 1. Tentar extrair direto (PDFs não comprimidos)
+  extrairDoBlocos(Buffer.from(raw, 'binary').toString('latin1'), texts)
+
+  // 2. Descomprimir streams FlateDecode (a maioria dos PDFs modernos)
+  const streamRe = /stream\r?\n([\s\S]*?)\r?\nendstream/g
+  let sm: RegExpExecArray | null
+  while ((sm = streamRe.exec(raw)) !== null) {
+    try {
+      const compressed = Buffer.from(sm[1], 'binary')
+      const decompressed = inflateSync(compressed).toString('latin1')
+      extrairDoBlocos(decompressed, texts)
+    } catch { /* stream não é zlib, ignora */ }
   }
 
   return texts
@@ -70,7 +85,7 @@ function extrairTextoPDF(buffer: Buffer): string {
        .replace(/\\\\/g, '\\')
        .replace(/[^\x20-\x7E\n]/g, '')
     )
-    .filter(t => t.trim().length > 0)
+    .filter(t => t.trim().length > 1)
     .join(' ')
     .replace(/\s{3,}/g, '  ')
     .trim()
