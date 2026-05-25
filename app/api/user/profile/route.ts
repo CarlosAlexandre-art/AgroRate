@@ -19,8 +19,7 @@ export async function GET() {
       createdAt: dbUser.createdAt,
     })
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error)
-    return NextResponse.json({ error: 'Erro interno', detalhe: msg }, { status: 500 })
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }
 
