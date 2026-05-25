@@ -36,18 +36,24 @@ async function analisarImagem(base64: string, mimeType: string, prompt: string):
 }
 
 async function extrairTextoPDF(buffer: Buffer): Promise<string> {
-  // canvas inicializa DOMMatrix ao carregar no Node — mock mínimo para não crashear
+  // Mock DOMMatrix — pdfjs-dist verifica no boot, mas não usa para extração de texto
   if (typeof (globalThis as any).DOMMatrix === 'undefined') {
     ;(globalThis as any).DOMMatrix = class {}
   }
-  const mod = await import('pdf-parse')
-  // pdf-parse é CJS: pode vir como mod.default ou como mod diretamente
-  const pdfParse: (buf: Buffer) => Promise<{ text: string }> =
-    typeof mod === 'function' ? (mod as any) :
-    typeof mod.default === 'function' ? mod.default :
-    (mod as any)
-  const result = await pdfParse(buffer)
-  return result.text
+  // Usa pdfjs-dist/legacy diretamente (build para Node.js, sem worker, sem canvas)
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs' as any)
+  pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+
+  const data = new Uint8Array(buffer)
+  const loadingTask = pdfjsLib.getDocument({ data })
+  const pdf = await loadingTask.promise
+  const pages: string[] = []
+  for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+    const page = await pdf.getPage(i)
+    const content = await page.getTextContent()
+    pages.push(content.items.map((it: any) => it.str).join(' '))
+  }
+  return pages.join('\n')
 }
 
 const PROMPT_CREDITO = `Você é um analista de crédito rural sênior com 20 anos de experiência em cooperativas e bancos agrícolas brasileiros (Banco do Brasil, Sicoob, Sicredi, Bradesco Rural).
