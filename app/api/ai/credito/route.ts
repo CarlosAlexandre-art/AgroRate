@@ -1,3 +1,4 @@
+import { NextRequest, NextResponse } from 'next/server'
 import { groq } from '@/lib/groq'
 import { rateLimit } from '@/lib/rate-limit'
 import { createClient } from '@/lib/supabase/server'
