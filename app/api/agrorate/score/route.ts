@@ -134,8 +134,11 @@ export async function GET(request: NextRequest) {
 
     if (!propertyId && userId) {
       const user = await resolveUser(userId)
-      if (!user || user.properties.length === 0) {
-        return NextResponse.json({ error: 'Nenhuma propriedade encontrada. Configure sua fazenda no SmartAgroOS.' }, { status: 404 })
+      if (!user) {
+        return NextResponse.json({ error: 'Nenhuma propriedade encontrada. Configure sua fazenda no SmartAgroOS.', _debug: { motivo: 'user_nao_encontrado', userId } }, { status: 404 })
+      }
+      if (user.properties.length === 0) {
+        return NextResponse.json({ error: 'Nenhuma propriedade encontrada. Configure sua fazenda no SmartAgroOS.', _debug: { motivo: 'sem_propriedades', userId, dbUserId: user.id, dbEmail: user.email } }, { status: 404 })
       }
       targetPropertyId = user.properties[0].id
     }
