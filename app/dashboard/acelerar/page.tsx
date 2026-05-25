@@ -38,7 +38,7 @@ type Step = {
   priority: 'alta' | 'media' | 'baixa'
 }
 
-const AGROOS_URL = 'https://agros-os.vercel.app'
+const AGROOS_URL = 'https://agroos.site'
 
 function buildSteps(cl: Checklist, sd: ScoreData): Step[] {
   return [

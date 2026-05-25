@@ -157,7 +157,7 @@ export default function DashboardPage() {
 
         <div className="space-y-3">
           {[
-            { step: '01', icon: '🖥️', title: 'Acesse o SmartAgroOS', desc: 'Entre em agros-os.vercel.app com o mesmo e-mail e senha do AgroRate. É a mesma conta.', href: 'https://agros-os.vercel.app', action: 'Abrir SmartAgroOS' },
+            { step: '01', icon: '🖥️', title: 'Acesse o SmartAgroOS', desc: 'Entre em agroos.site com o mesmo e-mail e senha do AgroRate. É a mesma conta.', href: 'https://agroos.site', action: 'Abrir SmartAgroOS' },
             { step: '02', icon: '🏡', title: 'Cadastre sua propriedade', desc: 'Crie uma propriedade, adicione os talhões (áreas de cultivo) e registre os membros da equipe.', href: null, action: null },
             { step: '03', icon: '💰', title: 'Registre receitas e custos', desc: 'Adicione pelo menos uma receita de colheita e seus custos operacionais. O score é calculado automaticamente em segundos.', href: null, action: null },
           ].map((s, i) => (
