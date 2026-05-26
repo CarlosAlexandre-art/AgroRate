@@ -37,8 +37,8 @@ async function enviarEmailConvite(params: {
   propertyName: string
   role: string
   inviteToken: string
-}) {
-  if (!process.env.RESEND_API_KEY) return
+}): Promise<{ ok: boolean; error?: string }> {
+  if (!process.env.RESEND_API_KEY) return { ok: false, error: 'RESEND_API_KEY não configurado' }
   try {
     const resend = new Resend(process.env.RESEND_API_KEY)
     const link = `https://agrorate.app/acesso/${params.inviteToken}`
@@ -46,7 +46,7 @@ async function enviarEmailConvite(params: {
     const perms = (ROLE_PERMS[params.role] ?? []).map(p => `<li style="margin:6px 0;color:#94a3b8;">${p}</li>`).join('')
 
     await resend.emails.send({
-      from: 'AgroRate <noreply@agrorate.app>',
+      from: process.env.RESEND_FROM_EMAIL ?? 'AgroRate <onboarding@resend.dev>',
       to: params.toEmail,
       subject: `${params.ownerName} convidou você para acessar o AgroRate`,
       html: `<!DOCTYPE html>
@@ -85,8 +85,10 @@ async function enviarEmailConvite(params: {
 </body>
 </html>`,
     })
-  } catch (e) {
+    return { ok: true }
+  } catch (e: any) {
     console.error('[compartilhamento] erro ao enviar email:', e)
+    return { ok: false, error: e?.message ?? String(e) }
   }
 }
 
@@ -133,8 +135,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Envia email em background (não bloqueia a resposta)
-    enviarEmailConvite({
+    const emailResult = await enviarEmailConvite({
       toEmail: body.email,
       toNome: body.nome,
       ownerName: owner?.name ?? 'Produtor',
@@ -143,7 +144,7 @@ export async function POST(req: NextRequest) {
       inviteToken: share.inviteToken,
     })
 
-    return NextResponse.json({ share }, { status: 201 })
+    return NextResponse.json({ share, emailEnviado: emailResult.ok, emailErro: emailResult.error }, { status: 201 })
   } catch (e) {
     console.error(e)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
