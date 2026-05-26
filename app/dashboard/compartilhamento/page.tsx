@@ -25,12 +25,21 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string }> 
   REVOKED:  { label: 'Revogado', color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
 }
 
+function diasAtras(date: string) {
+  const d = Math.floor((Date.now() - new Date(date).getTime()) / 86400000)
+  if (d === 0) return 'hoje'
+  if (d === 1) return 'ontem'
+  return `há ${d} dias`
+}
+
 export default function CompartilhamentoPage() {
   const [shares, setShares] = useState<Share[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
+  const [confirmRevogar, setConfirmRevogar] = useState<string | null>(null)
   const [form, setForm] = useState({ email: '', nome: '', role: 'CONTADOR' })
 
   async function load() {
@@ -44,6 +53,7 @@ export default function CompartilhamentoPage() {
 
   async function convidar() {
     if (!form.email) return
+    setFormError('')
     setSaving(true)
     try {
       const r = await fetch('/api/compartilhamento', {
@@ -51,13 +61,16 @@ export default function CompartilhamentoPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-      if (r.ok) { setShowForm(false); setForm({ email: '', nome: '', role: 'CONTADOR' }); load() }
+      const d = await r.json()
+      if (!r.ok) { setFormError(d.error ?? 'Erro ao enviar convite'); return }
+      setShowForm(false); setForm({ email: '', nome: '', role: 'CONTADOR' }); load()
     } finally { setSaving(false) }
   }
 
   async function revogar(id: string) {
     await fetch(`/api/compartilhamento?id=${id}`, { method: 'DELETE' })
     setShares(prev => prev.filter(s => s.id !== id))
+    setConfirmRevogar(null)
   }
 
   function copiarLink(token: string, id: string) {
@@ -151,6 +164,11 @@ export default function CompartilhamentoPage() {
                   </div>
                 </div>
               </div>
+              {formError && (
+                <div className="text-xs font-semibold px-3 py-2 rounded-xl" style={{ background: 'rgba(248,113,113,0.12)', color: '#f87171' }}>
+                  {formError}
+                </div>
+              )}
               <button onClick={convidar} disabled={saving || !form.email}
                 className="w-full py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02] disabled:opacity-50"
                 style={{ background: 'rgba(52,211,153,0.15)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)' }}>
@@ -194,7 +212,7 @@ export default function CompartilhamentoPage() {
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-white text-sm">{s.nome || s.email}</div>
                     <div className="text-xs text-slate-500">{s.email}</div>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-xs px-2 py-0.5 rounded-full"
                         style={{ background: 'rgba(52,211,153,0.08)', color: '#34d399' }}>
                         {role?.label ?? s.role}
@@ -202,6 +220,11 @@ export default function CompartilhamentoPage() {
                       <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
                         style={{ background: meta.bg, color: meta.color }}>
                         {meta.label}
+                      </span>
+                      <span className="text-xs text-slate-600">
+                        {s.status === 'ACTIVE' && s.acceptedAt
+                          ? `Aceitou ${diasAtras(s.acceptedAt)}`
+                          : `Convidado ${diasAtras(s.invitedAt)}`}
                       </span>
                     </div>
                   </div>
@@ -213,7 +236,24 @@ export default function CompartilhamentoPage() {
                         {copied === s.id ? 'Copiado!' : 'Copiar link'}
                       </button>
                     )}
-                    <button onClick={() => revogar(s.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Revogar</button>
+                    {s.status === 'ACTIVE' && (
+                      <button
+                        onClick={() => { const url = `${window.location.origin}/colaborador/${s.inviteToken}`; navigator.clipboard.writeText(url).then(() => { setCopied(s.id + '_portal'); setTimeout(() => setCopied(null), 2000) }) }}
+                        className="text-xs px-3 py-1.5 rounded-xl font-semibold transition-all"
+                        style={{ background: 'rgba(52,211,153,0.08)', color: copied === s.id + '_portal' ? '#4ade80' : '#34d399' }}>
+                        {copied === s.id + '_portal' ? 'Copiado!' : 'Portal'}
+                      </button>
+                    )}
+                    {s.status !== 'REVOKED' && (
+                      confirmRevogar === s.id ? (
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => revogar(s.id)} className="text-xs px-2 py-1 rounded-lg font-bold transition-colors" style={{ background: 'rgba(248,113,113,0.15)', color: '#f87171' }}>Confirmar</button>
+                          <button onClick={() => setConfirmRevogar(null)} className="text-xs text-slate-600 hover:text-white transition-colors px-1">✕</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setConfirmRevogar(s.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Revogar</button>
+                      )
+                    )}
                   </div>
                 </div>
               </div>
