@@ -76,7 +76,7 @@ function CertidaoRow({ icon, label, numero, situacao }: { icon: string; label: s
           {numero && <div style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)' }}>{numero}</div>}
         </div>
       </div>
-      <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '100px', background: numero ? (ok ? 'rgba(52,211,153,.15)' : 'rgba(248,113,113,.15)') : 'rgba(255,255,255,.06)', color: numero ? (ok ? '#34d399' : '#f87171') : 'rgba(255,255,255,.35)' }}>
+      <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '100px', flexShrink: 0, marginLeft: '8px', background: numero ? (ok ? 'rgba(52,211,153,.15)' : 'rgba(248,113,113,.15)') : 'rgba(255,255,255,.06)', color: numero ? (ok ? '#34d399' : '#f87171') : 'rgba(255,255,255,.35)' }}>
         {numero ? (situacao ?? 'Verificado') : 'Não verificado'}
       </span>
     </div>
@@ -132,7 +132,6 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
     }
   }
 
-  // Fluxo de caixa agrupado por mês
   const fluxo = (() => {
     if (!dados?.revenues && !dados?.costs) return []
     const meses: Record<string, { receita: number; custo: number }> = {}
@@ -148,11 +147,9 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
   })()
 
   const maxFluxo = Math.max(...fluxo.map(([, v]) => Math.max(v.receita, v.custo)), 1)
-
   const totalReceita = (dados?.revenues ?? []).reduce((s, r) => s + Number(r.amount), 0)
   const totalCusto = (dados?.costs ?? []).reduce((s, c) => s + Number(c.amount), 0)
   const margem = totalReceita > 0 ? ((totalReceita - totalCusto) / totalReceita) * 100 : 0
-
   const isContador = dados?.role === 'CONTADOR' || dados?.role === 'COLABORADOR'
 
   if (loading) return (
@@ -179,50 +176,105 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#020c14 0%,#041410 50%,#020c14 100%)', fontFamily: 'system-ui,sans-serif', color: '#f0fdf4' }}>
 
+      <style>{`
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        /* ── Responsivo mobile ── */
+        .c-hpad  { padding-left: 24px; padding-right: 24px; }
+        .c-mpad  { padding: 24px; }
+        .c-title { font-size: 26px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+
+        /* Tabs scrolláveis no mobile */
+        .c-tabs { display:flex; gap:4px; margin-bottom:24px; background:rgba(255,255,255,.03);
+          border-radius:14px; padding:4px; border:1px solid rgba(255,255,255,.06); }
+        .c-tab  { flex:1; padding:9px 12px; border-radius:10px; border:none; cursor:pointer;
+          font-weight:700; font-size:13px; transition:all .2s; }
+
+        /* Score: 2 colunas no desktop, 1 no mobile */
+        .c-sgrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
+        .c-cert-span { grid-column: 1 / -1; }
+
+        /* Fluxo: 3 colunas → 1 no mobile */
+        .c-fgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+
+        /* Doc row */
+        .c-drow { display:flex; align-items:center; justify-content:space-between;
+          padding:14px 18px; border-radius:14px; }
+
+        /* Contato */
+        .c-btns { display:flex; gap:8px; flex-shrink:0; }
+
+        @media (max-width: 640px) {
+          .c-hpad  { padding-left: 12px !important; padding-right: 12px !important; }
+          .c-mpad  { padding: 14px !important; }
+          .c-title { font-size: 19px !important; }
+
+          /* Tabs: scroll horizontal, sem quebra */
+          .c-tabs  { overflow-x: auto; -webkit-overflow-scrolling: touch;
+                     scrollbar-width: none; flex-wrap: nowrap; border-radius: 12px; }
+          .c-tabs::-webkit-scrollbar { display: none; }
+          .c-tab   { flex: none !important; white-space: nowrap;
+                     padding: 8px 11px !important; font-size: 11px !important; }
+
+          /* Score: 1 coluna */
+          .c-sgrid { grid-template-columns: 1fr !important; }
+
+          /* Fluxo: 1 coluna */
+          .c-fgrid { grid-template-columns: 1fr !important; }
+
+          /* Doc row: quebra linha se necessário */
+          .c-drow  { flex-wrap: wrap; gap: 8px; padding: 12px 14px !important; }
+
+          /* Botões de contato: largura total */
+          .c-btns  { width: 100%; flex-shrink: unset; }
+          .c-btns a { flex: 1; justify-content: center; font-size: 12px !important; padding: 9px 10px !important; }
+        }
+      `}</style>
+
       {/* Grid bg */}
       <div style={{ position: 'fixed', inset: 0, backgroundImage: 'linear-gradient(rgba(52,211,153,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(52,211,153,.025) 1px,transparent 1px)', backgroundSize: '48px 48px', pointerEvents: 'none', zIndex: 0 }} />
 
       {/* Header */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(2,12,20,.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(52,211,153,.12)', padding: '0 24px' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(2,12,20,.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(52,211,153,.12)' }}>
+        <div className="c-hpad" style={{ maxWidth: '1000px', margin: '0 auto', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+            <svg width="22" height="22" viewBox="0 0 32 32" fill="none" style={{ flexShrink: 0 }}>
               <circle cx="16" cy="16" r="7" fill="#22c55e" opacity=".9"/>
               <circle cx="16" cy="16" r="13" stroke="#22c55e" strokeWidth="1.5" strokeOpacity=".3"/>
             </svg>
-            <span style={{ fontWeight: 800, color: '#a7f3d0', fontSize: '16px' }}>AgroRate</span>
-            <span style={{ color: 'rgba(255,255,255,.2)', fontSize: '14px' }}>/</span>
-            <span style={{ color: 'rgba(255,255,255,.6)', fontSize: '14px', fontWeight: 500, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dados.property.name}</span>
+            <span style={{ fontWeight: 800, color: '#a7f3d0', fontSize: '15px', flexShrink: 0 }}>AgroRate</span>
+            <span style={{ color: 'rgba(255,255,255,.2)', fontSize: '14px', flexShrink: 0 }}>/</span>
+            <span style={{ color: 'rgba(255,255,255,.6)', fontSize: '13px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{dados.property.name}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '100px', background: 'rgba(52,211,153,.12)', color: '#34d399', border: '1px solid rgba(52,211,153,.25)' }}>
+          <div style={{ flexShrink: 0, marginLeft: '8px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '100px', background: 'rgba(52,211,153,.12)', color: '#34d399', border: '1px solid rgba(52,211,153,.25)', whiteSpace: 'nowrap' }}>
               {dados.role === 'CONTADOR' ? 'Contador' : dados.role === 'COLABORADOR' ? 'Colaborador' : 'Visualizador'}
             </span>
           </div>
         </div>
       </div>
 
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: '1000px', margin: '0 auto', padding: '24px' }}>
+      <div className="c-mpad" style={{ position: 'relative', zIndex: 1, maxWidth: '1000px', margin: '0 auto' }}>
 
         {/* Topo: propriedade + contato */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '28px' }}>
-          <div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.1em', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', marginBottom: '6px' }}>Propriedade</div>
-            <div style={{ fontSize: '26px', fontWeight: 800, color: '#fff', marginBottom: '4px' }}>{dados.property.name}</div>
-            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,.45)', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <div className="c-title">{dados.property.name}</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,.45)', display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '2px' }}>
               {dados.property.location && <span>📍 {dados.property.location}</span>}
               {dados.property.sizeHectares > 0 && <span>🌾 {dados.property.sizeHectares.toLocaleString('pt-BR')} ha</span>}
-              <span>👤 Produtor: {dados.owner.name}</span>
+              <span>👤 {dados.owner.name}</span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+          <div className="c-btns">
             {dados.owner.phone && (
               <a
                 href={`https://wa.me/55${dados.owner.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá ${dados.owner.name}! Sou seu ${dados.role === 'CONTADOR' ? 'contador' : 'colaborador'} com acesso ao AgroRate. Tenho uma dúvida sobre a propriedade ${dados.property.name}.`)}`}
                 target="_blank" rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 16px', borderRadius: '12px', background: 'rgba(34,197,94,.12)', border: '1px solid rgba(34,197,94,.25)', color: '#4ade80', fontWeight: 700, fontSize: '13px', textDecoration: 'none', transition: 'all .2s' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 16px', borderRadius: '12px', background: 'rgba(34,197,94,.12)', border: '1px solid rgba(34,197,94,.25)', color: '#4ade80', fontWeight: 700, fontSize: '13px', textDecoration: 'none' }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                 WhatsApp
               </a>
             )}
@@ -231,7 +283,7 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
               target="_blank" rel="noopener noreferrer"
               style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 16px', borderRadius: '12px', background: 'rgba(96,165,250,.10)', border: '1px solid rgba(96,165,250,.2)', color: '#93c5fd', fontWeight: 700, fontSize: '13px', textDecoration: 'none' }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               E-mail
             </a>
           </div>
@@ -239,15 +291,15 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
 
         {/* Abas */}
         {isContador && (
-          <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', background: 'rgba(255,255,255,.03)', borderRadius: '14px', padding: '4px', border: '1px solid rgba(255,255,255,.06)' }}>
+          <div className="c-tabs">
             {([
               { id: 'score', label: 'Score & Certidões' },
               { id: 'fluxo', label: 'Fluxo de Caixa' },
               { id: 'docs', label: 'Documentos' },
               { id: 'contratos', label: 'Contratos' },
             ] as const).map(a => (
-              <button key={a.id} onClick={() => setAba(a.id)}
-                style={{ flex: 1, padding: '9px 12px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '13px', transition: 'all .2s',
+              <button key={a.id} className="c-tab" onClick={() => setAba(a.id)}
+                style={{
                   background: aba === a.id ? 'rgba(52,211,153,.15)' : 'transparent',
                   color: aba === a.id ? '#34d399' : 'rgba(255,255,255,.45)',
                 }}>
@@ -259,7 +311,7 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
 
         {/* ── ABA SCORE ── */}
         {(aba === 'score' || !isContador) && dados.score && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+          <div className="c-sgrid">
 
             {/* Score principal */}
             <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '20px', padding: '28px' }}>
@@ -305,7 +357,7 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
 
             {/* Certidões — apenas CONTADOR/COLABORADOR */}
             {isContador && dados.agroRate && (
-              <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '20px', padding: '28px', gridColumn: 'span 2' }}>
+              <div className="c-cert-span" style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '20px', padding: '28px' }}>
                 <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.1em', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', marginBottom: '16px' }}>Regularidade & Certidões</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0 40px' }}>
                   <CertidaoRow icon="🌿" label="CAR" numero={dados.agroRate.carNumero} situacao={dados.agroRate.carSituacao} />
@@ -323,33 +375,35 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
             {/* Resumo */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+            <div className="c-fgrid">
               {[
                 { label: 'Receita Total', val: fmt(totalReceita), cor: '#34d399' },
                 { label: 'Custo Total', val: fmt(totalCusto), cor: '#f87171' },
                 { label: 'Margem', val: `${margem.toFixed(1)}%`, cor: margem >= 0 ? '#34d399' : '#f87171' },
               ].map(c => (
-                <div key={c.label} style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '16px', padding: '20px' }}>
+                <div key={c.label} style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '16px', padding: '18px 20px' }}>
                   <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,.35)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '8px' }}>{c.label}</div>
-                  <div style={{ fontSize: '22px', fontWeight: 800, color: c.cor }}>{c.val}</div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, color: c.cor }}>{c.val}</div>
                 </div>
               ))}
             </div>
 
             {/* Gráfico de barras */}
             {fluxo.length > 0 && (
-              <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '20px', padding: '28px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.1em', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', marginBottom: '24px' }}>Receitas vs Custos (últimos 12 meses)</div>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '160px' }}>
-                  {fluxo.map(([mes, v]) => (
-                    <div key={mes} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', height: '100%', justifyContent: 'flex-end' }}>
-                      <div style={{ width: '100%', display: 'flex', gap: '2px', alignItems: 'flex-end', justifyContent: 'center' }}>
-                        <div title={fmt(v.receita)} style={{ flex: 1, borderRadius: '3px 3px 0 0', background: '#059669', height: `${(v.receita / maxFluxo) * 140}px`, minHeight: v.receita > 0 ? '2px' : '0', transition: 'height .8s ease' }} />
-                        <div title={fmt(v.custo)} style={{ flex: 1, borderRadius: '3px 3px 0 0', background: '#dc2626', height: `${(v.custo / maxFluxo) * 140}px`, minHeight: v.custo > 0 ? '2px' : '0', transition: 'height .8s ease' }} />
+              <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '20px', padding: '24px', overflowX: 'auto' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.1em', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', marginBottom: '20px' }}>Receitas vs Custos (últimos 12 meses)</div>
+                <div style={{ minWidth: '280px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '140px' }}>
+                    {fluxo.map(([mes, v]) => (
+                      <div key={mes} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', height: '100%', justifyContent: 'flex-end' }}>
+                        <div style={{ width: '100%', display: 'flex', gap: '2px', alignItems: 'flex-end', justifyContent: 'center' }}>
+                          <div title={fmt(v.receita)} style={{ flex: 1, borderRadius: '3px 3px 0 0', background: '#059669', height: `${(v.receita / maxFluxo) * 120}px`, minHeight: v.receita > 0 ? '2px' : '0', transition: 'height .8s ease' }} />
+                          <div title={fmt(v.custo)} style={{ flex: 1, borderRadius: '3px 3px 0 0', background: '#dc2626', height: `${(v.custo / maxFluxo) * 120}px`, minHeight: v.custo > 0 ? '2px' : '0', transition: 'height .8s ease' }} />
+                        </div>
+                        <div style={{ fontSize: '9px', color: 'rgba(255,255,255,.3)', textAlign: 'center', lineHeight: 1 }}>{monthLabel(mes + '-01')}</div>
                       </div>
-                      <div style={{ fontSize: '9px', color: 'rgba(255,255,255,.3)', textAlign: 'center', lineHeight: 1 }}>{monthLabel(mes + '-01')}</div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '20px', marginTop: '16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#059669' }}/><span style={{ fontSize: '11px', color: 'rgba(255,255,255,.45)' }}>Receita</span></div>
@@ -364,8 +418,7 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
         {aba === 'docs' && isContador && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-            {/* Lista de documentos */}
-            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '20px', padding: '28px' }}>
+            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '20px', padding: '24px' }}>
               <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.1em', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', marginBottom: '20px' }}>Documentos da Propriedade</div>
               {(!(dados.documents?.length) && !localDocs.length) ? (
                 <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,.3)', fontSize: '14px' }}>Nenhum documento disponível</div>
@@ -375,11 +428,11 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
                     const vencendo = doc.expiry && new Date(doc.expiry).getTime() - Date.now() < 30 * 86400000
                     const isMeu = doc.category === 'CONTADOR_UPLOAD'
                     return (
-                      <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: '14px', background: isMeu ? 'rgba(96,165,250,.04)' : 'rgba(255,255,255,.03)', border: `1px solid ${isMeu ? 'rgba(96,165,250,.15)' : 'rgba(255,255,255,.07)'}` }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: isMeu ? 'rgba(96,165,250,.1)' : 'rgba(52,211,153,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>{isMeu ? '📎' : '📄'}</div>
-                          <div>
-                            <div style={{ fontWeight: 600, color: '#fff', fontSize: '13px' }}>{doc.name}</div>
+                      <div key={doc.id} className="c-drow" style={{ background: isMeu ? 'rgba(96,165,250,.04)' : 'rgba(255,255,255,.03)', border: `1px solid ${isMeu ? 'rgba(96,165,250,.15)' : 'rgba(255,255,255,.07)'}` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                          <div style={{ width: '36px', height: '36px', flexShrink: 0, borderRadius: '10px', background: isMeu ? 'rgba(96,165,250,.1)' : 'rgba(52,211,153,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>{isMeu ? '📎' : '📄'}</div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, color: '#fff', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.name}</div>
                             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)', marginTop: '2px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                               <span style={{ color: isMeu ? '#93c5fd' : undefined }}>{isMeu ? 'Enviado por você' : doc.category}</span>
                               {doc.expiry && <span style={{ color: vencendo ? '#fbbf24' : undefined }}>{vencendo ? '⚠️ ' : ''}Validade: {new Date(doc.expiry).toLocaleDateString('pt-BR')}</span>}
@@ -388,7 +441,7 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
                         </div>
                         <a href={isMeu && doc.fileUrl ? doc.fileUrl : `/api/colaborador/${token}/doc/${doc.id}`}
                           target="_blank" rel="noopener noreferrer"
-                          style={{ padding: '7px 14px', borderRadius: '10px', background: isMeu ? 'rgba(96,165,250,.1)' : 'rgba(52,211,153,.1)', border: `1px solid ${isMeu ? 'rgba(96,165,250,.2)' : 'rgba(52,211,153,.2)'}`, color: isMeu ? '#93c5fd' : '#34d399', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}>
+                          style={{ flexShrink: 0, marginLeft: '8px', padding: '7px 14px', borderRadius: '10px', background: isMeu ? 'rgba(96,165,250,.1)' : 'rgba(52,211,153,.1)', border: `1px solid ${isMeu ? 'rgba(96,165,250,.2)' : 'rgba(52,211,153,.2)'}`, color: isMeu ? '#93c5fd' : '#34d399', fontSize: '12px', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                           Baixar
                         </a>
                       </div>
@@ -399,13 +452,13 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
             </div>
 
             {/* Upload do contador */}
-            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(96,165,250,.15)', borderRadius: '20px', padding: '28px' }}>
+            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(96,165,250,.15)', borderRadius: '20px', padding: '24px' }}>
               <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.1em', color: 'rgba(147,197,253,.5)', textTransform: 'uppercase', marginBottom: '16px' }}>Enviar Arquivo</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 18px', borderRadius: '14px', background: 'rgba(255,255,255,.04)', border: '1px dashed rgba(96,165,250,.25)', cursor: 'pointer' }}>
-                  <span style={{ fontSize: '20px' }}>📎</span>
+                  <span style={{ fontSize: '20px', flexShrink: 0 }}>📎</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: uploadFile ? '#93c5fd' : 'rgba(255,255,255,.5)' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: uploadFile ? '#93c5fd' : 'rgba(255,255,255,.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {uploadFile ? uploadFile.name : 'Clique para selecionar um arquivo'}
                     </div>
                     <div style={{ fontSize: '11px', color: 'rgba(255,255,255,.25)', marginTop: '2px' }}>PDF, imagem, planilha — máx. 20 MB</div>
@@ -434,7 +487,7 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
 
         {/* ── ABA CONTRATOS ── */}
         {aba === 'contratos' && isContador && (
-          <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '20px', padding: '28px' }}>
+          <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '20px', padding: '24px' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.1em', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', marginBottom: '20px' }}>Contratos de Crédito Ativos</div>
             {(!dados.loanContracts || dados.loanContracts.length === 0) ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,.3)', fontSize: '14px' }}>Nenhum contrato cadastrado</div>
@@ -443,14 +496,14 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
                 {dados.loanContracts.map((c: any) => (
                   <div key={c.id} style={{ padding: '16px 20px', borderRadius: '14px', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
-                      <div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontWeight: 700, color: '#fff', fontSize: '14px' }}>{c.banco} — {c.linha}</div>
                         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,.4)', marginTop: '4px' }}>
                           Contratado em {new Date(c.dataContratacao).toLocaleDateString('pt-BR')}
                           {c.dataVencimento && ` · Vence ${new Date(c.dataVencimento).toLocaleDateString('pt-BR')}`}
                         </div>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399' }}>{fmt(Number(c.valor))}</div>
                         <div style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)', marginTop: '2px' }}>{Number(c.taxaAnual).toFixed(2)}% a.a. · {c.prazo} meses</div>
                       </div>
