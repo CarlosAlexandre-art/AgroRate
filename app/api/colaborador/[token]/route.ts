@@ -8,6 +8,7 @@ export async function GET(
   try {
     const { token } = await params
 
+    // Query principal — tabelas que existem em todos os ambientes
     const share = await prisma.propertyShare.findUnique({
       where: { inviteToken: token },
       include: {
@@ -16,24 +17,30 @@ export async function GET(
             user: { select: { name: true, email: true, phone: true } },
             agroRate: true,
             revenues: { orderBy: { date: 'asc' }, select: { amount: true, date: true, category: true, description: true } },
-            costs: { orderBy: { date: 'asc' }, select: { amount: true, date: true, category: true, description: true } },
+            costs:    { orderBy: { date: 'asc' }, select: { amount: true, date: true, category: true, description: true } },
             documents: { orderBy: { createdAt: 'desc' }, select: { id: true, name: true, category: true, fileUrl: true, fileName: true, expiry: true, createdAt: true } },
-            certidoes: { orderBy: { createdAt: 'desc' } },
-            loanContracts: { orderBy: { dataContratacao: 'desc' } },
-            garantias: { orderBy: { createdAt: 'desc' } },
           },
         },
       },
     })
 
     if (!share) return NextResponse.json({ error: 'Acesso inválido' }, { status: 404 })
-    if (share.status !== 'ACTIVE') return NextResponse.json({ error: 'Convite não aceito ainda', pendente: true }, { status: 403 })
     if (share.status === 'REVOKED') return NextResponse.json({ error: 'Acesso revogado' }, { status: 403 })
+    if (share.status !== 'ACTIVE') return NextResponse.json({ error: 'Convite não aceito ainda', pendente: true }, { status: 403 })
 
     const p = share.property
     const role = share.role
+    const propertyId = p.id
 
-    // Base — todos os roles veem isso
+    // Queries opcionais — tabelas que podem não existir em produção
+    let certidoes: any[] = []
+    let loanContracts: any[] = []
+    let garantias: any[] = []
+
+    try { certidoes = await (prisma as any).certidao.findMany({ where: { propertyId }, orderBy: { createdAt: 'desc' } }) } catch {}
+    try { loanContracts = await (prisma as any).loanContract.findMany({ where: { propertyId }, orderBy: { dataContratacao: 'desc' } }) } catch {}
+    try { if (role === 'COLABORADOR') garantias = await (prisma as any).garantia.findMany({ where: { propertyId }, orderBy: { createdAt: 'desc' } }) } catch {}
+
     const base = {
       role,
       nomeColaborador: share.nome,
@@ -61,7 +68,6 @@ export async function GET(
       } : null,
     }
 
-    // CONTADOR e COLABORADOR veem dados financeiros completos
     if (role === 'CONTADOR' || role === 'COLABORADOR') {
       return NextResponse.json({
         ...base,
@@ -77,16 +83,15 @@ export async function GET(
           cafNumero: p.agroRate.cafNumero,
           cafSituacao: p.agroRate.cafSituacao,
         } : null,
-        certidoes: p.certidoes,
+        certidoes,
         revenues: p.revenues,
         costs: p.costs,
         documents: p.documents,
-        loanContracts: p.loanContracts,
-        garantias: role === 'COLABORADOR' ? p.garantias : undefined,
+        loanContracts,
+        garantias: role === 'COLABORADOR' ? garantias : undefined,
       })
     }
 
-    // VISUALIZADOR — apenas score e documentos básicos
     return NextResponse.json({
       ...base,
       documents: p.documents.map(d => ({ id: d.id, name: d.name, category: d.category, expiry: d.expiry })),
