@@ -45,15 +45,21 @@ function fmt(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 }
 
+function pct(v: number) {
+  return Math.min(100, v > 1 ? Math.round(v) : Math.round(v * 100))
+}
+
 function ScoreBar({ label, val, max = 250 }: { label: string; val: number; max?: number }) {
+  const display = Math.min(val, max)
+  const width = Math.min((display / max) * 100, 100)
   return (
     <div style={{ marginBottom: '10px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
         <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.55)' }}>{label}</span>
-        <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399' }}>{val}<span style={{ color: 'rgba(255,255,255,.3)', fontWeight: 400 }}>/{max}</span></span>
+        <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399' }}>{display}<span style={{ color: 'rgba(255,255,255,.3)', fontWeight: 400 }}>/{max}</span></span>
       </div>
       <div style={{ height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,.08)' }}>
-        <div style={{ height: '100%', borderRadius: '3px', background: 'linear-gradient(90deg,#059669,#34d399)', width: `${(val / max) * 100}%`, transition: 'width 1s ease' }} />
+        <div style={{ height: '100%', borderRadius: '3px', background: 'linear-gradient(90deg,#059669,#34d399)', width: `${width}%`, transition: 'width 1s ease' }} />
       </div>
     </div>
   )
@@ -84,6 +90,11 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState('')
   const [aba, setAba] = useState<'score' | 'fluxo' | 'docs' | 'contratos'>('score')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadDesc, setUploadDesc] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [uploadMsg, setUploadMsg] = useState('')
+  const [localDocs, setLocalDocs] = useState<{ id: string; name: string; category: string; fileUrl?: string; fileName?: string; expiry?: string }[]>([])
 
   useEffect(() => {
     params.then(({ token: t }) => {
@@ -100,6 +111,26 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
         .finally(() => setLoading(false))
     })
   }, [params, router])
+
+  async function handleUpload() {
+    if (!uploadFile || !token) return
+    setUploading(true)
+    setUploadMsg('')
+    try {
+      const fd = new FormData()
+      fd.append('file', uploadFile)
+      fd.append('descricao', uploadDesc || uploadFile.name)
+      const r = await fetch(`/api/colaborador/${token}/upload`, { method: 'POST', body: fd })
+      const d = await r.json()
+      if (!r.ok) { setUploadMsg(d.error ?? 'Erro no upload'); return }
+      setUploadMsg('Arquivo enviado com sucesso!')
+      setUploadFile(null)
+      setUploadDesc('')
+      if (d.doc) setLocalDocs(prev => [d.doc, ...prev])
+    } finally {
+      setUploading(false)
+    }
+  }
 
   // Fluxo de caixa agrupado por mês
   const fluxo = (() => {
@@ -196,7 +227,8 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
               </a>
             )}
             <a
-              href={`mailto:${dados.owner.email}?subject=AgroRate - ${dados.property.name}&body=Olá ${dados.owner.name},%0A%0AEstou acessando os dados da propriedade ${dados.property.name} pelo AgroRate.%0A%0A`}
+              href={`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(dados.owner.email)}&su=${encodeURIComponent(`AgroRate - ${dados.property.name}`)}&body=${encodeURIComponent(`Olá ${dados.owner.name},\n\nEstou acessando os dados da propriedade ${dados.property.name} pelo AgroRate.\n\n`)}`}
+              target="_blank" rel="noopener noreferrer"
               style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 16px', borderRadius: '12px', background: 'rgba(96,165,250,.10)', border: '1px solid rgba(96,165,250,.2)', color: '#93c5fd', fontWeight: 700, fontSize: '13px', textDecoration: 'none' }}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -261,11 +293,11 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
               <ScoreBar label="Operacional" val={dados.score.operationalScore} />
               <div style={{ marginTop: '20px', display: 'flex', gap: '16px' }}>
                 <div style={{ flex: 1, background: 'rgba(255,255,255,.04)', borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399' }}>{Math.round(dados.score.paymentOnTimeRate * 100)}%</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399' }}>{pct(dados.score.paymentOnTimeRate)}%</div>
                   <div style={{ fontSize: '10px', color: 'rgba(255,255,255,.4)', marginTop: '2px' }}>Pontualidade</div>
                 </div>
                 <div style={{ flex: 1, background: 'rgba(255,255,255,.04)', borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399' }}>{Math.round(dados.score.dataCompleteness * 100)}%</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399' }}>{pct(dados.score.dataCompleteness)}%</div>
                   <div style={{ fontSize: '10px', color: 'rgba(255,255,255,.4)', marginTop: '2px' }}>Completude</div>
                 </div>
               </div>
@@ -330,37 +362,73 @@ export default function ColaboradorPortal({ params }: { params: Promise<{ token:
 
         {/* ── ABA DOCUMENTOS ── */}
         {aba === 'docs' && isContador && (
-          <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '20px', padding: '28px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.1em', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', marginBottom: '20px' }}>Documentos da Propriedade</div>
-            {(!dados.documents || dados.documents.length === 0) ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,.3)', fontSize: '14px' }}>Nenhum documento disponível</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {dados.documents.map(doc => {
-                  const vencendo = doc.expiry && new Date(doc.expiry).getTime() - Date.now() < 30 * 86400000
-                  return (
-                    <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: '14px', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(52,211,153,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>📄</div>
-                        <div>
-                          <div style={{ fontWeight: 600, color: '#fff', fontSize: '13px' }}>{doc.name}</div>
-                          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)', marginTop: '2px', display: 'flex', gap: '10px' }}>
-                            <span>{doc.category}</span>
-                            {doc.expiry && <span style={{ color: vencendo ? '#fbbf24' : undefined }}>{vencendo ? '⚠️ ' : ''}Validade: {new Date(doc.expiry).toLocaleDateString('pt-BR')}</span>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+            {/* Lista de documentos */}
+            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '20px', padding: '28px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.1em', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', marginBottom: '20px' }}>Documentos da Propriedade</div>
+              {(!(dados.documents?.length) && !localDocs.length) ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,.3)', fontSize: '14px' }}>Nenhum documento disponível</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {[...(dados.documents ?? []), ...localDocs].map(doc => {
+                    const vencendo = doc.expiry && new Date(doc.expiry).getTime() - Date.now() < 30 * 86400000
+                    const isMeu = doc.category === 'CONTADOR_UPLOAD'
+                    return (
+                      <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: '14px', background: isMeu ? 'rgba(96,165,250,.04)' : 'rgba(255,255,255,.03)', border: `1px solid ${isMeu ? 'rgba(96,165,250,.15)' : 'rgba(255,255,255,.07)'}` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: isMeu ? 'rgba(96,165,250,.1)' : 'rgba(52,211,153,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>{isMeu ? '📎' : '📄'}</div>
+                          <div>
+                            <div style={{ fontWeight: 600, color: '#fff', fontSize: '13px' }}>{doc.name}</div>
+                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)', marginTop: '2px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                              <span style={{ color: isMeu ? '#93c5fd' : undefined }}>{isMeu ? 'Enviado por você' : doc.category}</span>
+                              {doc.expiry && <span style={{ color: vencendo ? '#fbbf24' : undefined }}>{vencendo ? '⚠️ ' : ''}Validade: {new Date(doc.expiry).toLocaleDateString('pt-BR')}</span>}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      {doc.fileUrl && (
-                        <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer"
-                          style={{ padding: '7px 14px', borderRadius: '10px', background: 'rgba(52,211,153,.1)', border: '1px solid rgba(52,211,153,.2)', color: '#34d399', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}>
+                        <a href={isMeu && doc.fileUrl ? doc.fileUrl : `/api/colaborador/${token}/doc/${doc.id}`}
+                          target="_blank" rel="noopener noreferrer"
+                          style={{ padding: '7px 14px', borderRadius: '10px', background: isMeu ? 'rgba(96,165,250,.1)' : 'rgba(52,211,153,.1)', border: `1px solid ${isMeu ? 'rgba(96,165,250,.2)' : 'rgba(52,211,153,.2)'}`, color: isMeu ? '#93c5fd' : '#34d399', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}>
                           Baixar
                         </a>
-                      )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Upload do contador */}
+            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(96,165,250,.15)', borderRadius: '20px', padding: '28px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.1em', color: 'rgba(147,197,253,.5)', textTransform: 'uppercase', marginBottom: '16px' }}>Enviar Arquivo</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 18px', borderRadius: '14px', background: 'rgba(255,255,255,.04)', border: '1px dashed rgba(96,165,250,.25)', cursor: 'pointer' }}>
+                  <span style={{ fontSize: '20px' }}>📎</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: uploadFile ? '#93c5fd' : 'rgba(255,255,255,.5)' }}>
+                      {uploadFile ? uploadFile.name : 'Clique para selecionar um arquivo'}
                     </div>
-                  )
-                })}
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,.25)', marginTop: '2px' }}>PDF, imagem, planilha — máx. 20 MB</div>
+                  </div>
+                  <input type="file" style={{ display: 'none' }} accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx"
+                    onChange={e => setUploadFile(e.target.files?.[0] ?? null)} />
+                </label>
+                <input
+                  type="text" value={uploadDesc} onChange={e => setUploadDesc(e.target.value)}
+                  placeholder="Descrição (ex: Declaração IR 2025)"
+                  style={{ padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.1)', color: '#fff', fontSize: '13px', outline: 'none' }}
+                />
+                {uploadMsg && (
+                  <div style={{ fontSize: '12px', fontWeight: 600, padding: '8px 14px', borderRadius: '10px', background: uploadMsg.includes('sucesso') ? 'rgba(52,211,153,.12)' : 'rgba(248,113,113,.12)', color: uploadMsg.includes('sucesso') ? '#34d399' : '#f87171' }}>
+                    {uploadMsg}
+                  </div>
+                )}
+                <button onClick={handleUpload} disabled={!uploadFile || uploading}
+                  style={{ padding: '12px', borderRadius: '12px', background: 'rgba(96,165,250,.12)', border: '1px solid rgba(96,165,250,.25)', color: '#93c5fd', fontWeight: 700, fontSize: '13px', cursor: !uploadFile || uploading ? 'not-allowed' : 'pointer', opacity: !uploadFile || uploading ? .5 : 1 }}>
+                  {uploading ? 'Enviando…' : 'Enviar Arquivo'}
+                </button>
               </div>
-            )}
+            </div>
           </div>
         )}
 
