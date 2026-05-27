@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Montserrat } from 'next/font/google'
 import './globals.css'
 import PwaInstall from '@/components/PwaInstall'
+import SplashScreen from '@/components/SplashScreen'
 
 const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat' })
 
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }} />
       </head>
       <body className="font-sans min-h-full bg-[#f0fdf4] text-[#0f172a]">
+        <SplashScreen />
         {children}
         <PwaInstall />
         <script dangerouslySetInnerHTML={{

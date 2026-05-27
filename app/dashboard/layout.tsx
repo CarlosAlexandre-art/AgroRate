@@ -203,6 +203,64 @@ function NavItem({ href, label, icon, active, badge, onClick }: { href: string; 
   )
 }
 
+function PushPrompt({ onDone }: { onDone: () => void }) {
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+
+  async function ativar() {
+    setLoading(true)
+    try {
+      const permission = await Notification.requestPermission()
+      if (permission === 'granted') {
+        const reg = await navigator.serviceWorker.ready
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        })
+        const { endpoint, keys } = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
+        await fetch('/api/push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint, p256dh: keys.p256dh, auth: keys.auth }),
+        }).catch(() => {})
+        setDone(true)
+        setTimeout(onDone, 1500)
+      } else {
+        onDone()
+      }
+    } catch { onDone() }
+    setLoading(false)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+      <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl" style={{ background: 'linear-gradient(160deg,#0f172a,#062418)' }}>
+        <div className="px-5 pt-5 pb-4">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-[#065f46]/40 border border-[#065f46]/30 flex items-center justify-center flex-shrink-0 text-lg">🔔</div>
+            <div>
+              <div className="font-bold text-white text-sm leading-snug">Fique por dentro do seu score</div>
+              <div className="text-[11px] text-slate-400 mt-0.5">Receba alertas 2x ao dia quando seu AgroRate mudar.</div>
+            </div>
+          </div>
+          {done ? (
+            <div className="text-center py-2 text-emerald-400 font-bold text-sm">✓ Notificações ativadas!</div>
+          ) : (
+            <div className="flex gap-2 mt-3">
+              <button onClick={onDone} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                Depois
+              </button>
+              <button onClick={ativar} disabled={loading} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all" style={{ background: 'linear-gradient(135deg,#065f46,#047857)' }}>
+                {loading ? 'Aguarde…' : '🔔 Ativar agora'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userName, setUserName] = useState('')
@@ -210,6 +268,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [score, setScore] = useState<number | null>(null)
   const [scoreLoaded, setScoreLoaded] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [showPushPrompt, setShowPushPrompt] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -270,6 +329,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
     })
   }, [router])
+
+  useEffect(() => {
+    if (!scoreLoaded) return
+    try {
+      if (localStorage.getItem('agrorate_push_prompted')) return
+      if (!('Notification' in window) || Notification.permission === 'denied') return
+      if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) return
+      const t = setTimeout(() => setShowPushPrompt(true), 2000)
+      return () => clearTimeout(t)
+    } catch { /* ignore */ }
+  }, [scoreLoaded])
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -412,6 +482,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="flex-1 overflow-y-auto overflow-x-hidden">{children}</main>
       </div>
       <AnalisarDocumentoCredito />
+      {showPushPrompt && (
+        <PushPrompt onDone={() => {
+          try { localStorage.setItem('agrorate_push_prompted', '1') } catch {}
+          setShowPushPrompt(false)
+        }} />
+      )}
     </div>
   )
 }
