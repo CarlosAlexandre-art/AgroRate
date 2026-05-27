@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
         userId: dbUser.id,
         nome: body.nome,
         role: body.role,
-        tipo: body.tipo || 'CUSTOMIZADO',
+        tipo: body.tipo || 'PERSONALIZADO',
         systemPrompt: body.systemPrompt || null,
         tools: body.tools || [],
         trigger: body.trigger || 'MANUAL',

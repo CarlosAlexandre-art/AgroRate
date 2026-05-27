@@ -65,13 +65,17 @@ model AgentConfig {
   userId       String
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   nome         String
+  descricao    String?
   role         String
-  tipo         String      @default("CUSTOMIZADO")
+  tipo         String      @default("PERSONALIZADO")
   systemPrompt String?
   tools        String[]
   trigger      String      @default("MANUAL")
+  schedule     String?
+  modelo       String      @default("llama-3.3-70b-versatile")
   ativo        Boolean     @default(true)
   createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
   runs         AgentRun[]
 
   @@index([userId])
