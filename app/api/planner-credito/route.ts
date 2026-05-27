@@ -24,9 +24,9 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json({ planos })
-  } catch (e) {
-    console.error(e)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+  } catch (e: any) {
+    console.error('[planner-credito GET]', e?.message)
+    return NextResponse.json({ error: e?.message ?? 'Erro interno' }, { status: 500 })
   }
 }
 
@@ -117,8 +117,8 @@ Seja objetivo e prático. Responda em português.`
       },
     })
     return NextResponse.json({ plano }, { status: 201 })
-  } catch (e) {
-    console.error(e)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+  } catch (e: any) {
+    console.error('[planner-credito POST]', e?.message)
+    return NextResponse.json({ error: e?.message ?? 'Erro interno' }, { status: 500 })
   }
 }
