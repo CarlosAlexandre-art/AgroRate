@@ -565,3 +565,52 @@ model CreditPlan {
 
   @@index([propertyId])
 }
+
+// ─── ORYON Legal ─────────────────────────────────────────────────────────────
+
+model OryonLegalLead {
+  id               String         @id @default(uuid())
+  nome             String
+  telefone         String
+  email            String?
+  cidade           String?
+  estado           String?
+  objetivo         String?
+  origem           String         @default("agrorate")
+  score            Int?
+  nivel            String?
+  vulnerabilidades String?
+  recomendacao     String?
+  prioridade       String?
+  resumo           String?
+  respostas        String?
+  createdAt        DateTime       @default(now())
+  reunioes         ReuniaoLegal[]
+
+  @@index([telefone])
+}
+
+model SlotDisponivel {
+  id         String         @id @default(uuid())
+  data       DateTime
+  durMinutos Int            @default(60)
+  modalidade String         @default("ONLINE")
+  ocupado    Boolean        @default(false)
+  createdAt  DateTime       @default(now())
+  reunioes   ReuniaoLegal[]
+}
+
+model ReuniaoLegal {
+  id           String          @id @default(uuid())
+  leadId       String
+  lead         OryonLegalLead  @relation(fields: [leadId], references: [id])
+  slotId       String?
+  slot         SlotDisponivel? @relation(fields: [slotId], references: [id])
+  status       String          @default("PENDENTE")
+  modalidade   String          @default("ONLINE")
+  linkOnline   String?
+  observacoes  String?
+  googleEventId String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
