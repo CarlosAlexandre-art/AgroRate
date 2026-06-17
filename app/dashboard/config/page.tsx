@@ -3,6 +3,24 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+
+function ExclusaoDadosBtn() {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle')
+  async function handleClick() {
+    if (!confirm('Confirmar solicitação de exclusão de dados? Você receberá uma resposta em até 30 dias. Dados financeiros podem ter retenção regulatória obrigatória.')) return
+    setStatus('loading')
+    const res = await fetch('/api/lgpd/solicitar-exclusao', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+    setStatus(res.ok ? 'ok' : 'err')
+  }
+  if (status === 'ok') return <p className="text-sm text-emerald-600 font-medium">✓ Solicitação enviada. Processamos em até 30 dias.</p>
+  if (status === 'err') return <p className="text-sm text-red-600">Erro ao enviar. Escreva para privacidade@oryonag.com.br</p>
+  return (
+    <button onClick={handleClick} disabled={status === 'loading'} className="text-sm text-red-600 font-semibold hover:text-red-700 transition-colors disabled:opacity-50 underline text-left">
+      {status === 'loading' ? 'Enviando solicitação...' : 'Solicitar exclusão dos meus dados'}
+    </button>
+  )
+}
 
 type UserData = { name: string; email: string; phone: string; avatarUrl: string; createdAt: string }
 
@@ -445,6 +463,11 @@ export default function ConfigPage() {
             <span className="text-base">🖥️</span>
             Gerenciar dados da fazenda no SmartAgroOS
           </a>
+          <div className="p-3 rounded-xl border border-slate-100 space-y-2">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Privacidade (LGPD Art. 18)</div>
+            <p className="text-xs text-slate-500">Solicite a exclusão dos seus dados pessoais. Dados financeiros podem ter retenção regulatória obrigatória de até 5 anos. <Link href="/privacidade" className="text-amber-600 hover:underline">Ver política</Link></p>
+            <ExclusaoDadosBtn />
+          </div>
           <button onClick={handleSignOut}
             className="w-full flex items-center gap-3 p-3 rounded-xl border border-red-100 text-red-600 font-semibold text-sm hover:bg-red-50 transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

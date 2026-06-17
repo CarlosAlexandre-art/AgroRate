@@ -3,6 +3,7 @@ import { Montserrat } from 'next/font/google'
 import './globals.css'
 import PwaInstall from '@/components/PwaInstall'
 import SplashScreen from '@/components/SplashScreen'
+import CookieBanner from '@/components/CookieBanner'
 
 const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat' })
 
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SplashScreen />
         {children}
         <PwaInstall />
+        <CookieBanner />
         <script dangerouslySetInnerHTML={{
           __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{scope:'/',updateViaCache:'none'});});}`
         }} />
