@@ -368,6 +368,12 @@ export default function OryonLegalPage() {
   // ── LANDING ──
   return (
     <div style={{ fontFamily: 'system-ui,sans-serif', background: 'white', overflowX: 'hidden' }}>
+      {/* Botão voltar ao dashboard */}
+      <div style={{ position: 'fixed', top: '16px', left: '16px', zIndex: 9999 }}>
+        <a href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)', color: 'white', fontSize: '13px', fontWeight: 600, borderRadius: '10px', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.15)' }}>
+          ← Dashboard
+        </a>
+      </div>
       <div style={{ minHeight: '100vh', background: `linear-gradient(160deg,#1c0700 0%,#78350f 35%,#ca8a04 70%,#fbbf24 100%)`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 24px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         {[500, 700, 900].map((size, i) => (
           <div key={size} style={{ position: 'absolute', width: `${size}px`, height: `${size}px`, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.05)', top: '50%', left: '50%', transform: `translate(-50%,-50%) scale(${1 + scrollY * 0.0004 * (i + 1)})` }} />
