@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req)
+    const { allowed } = rateLimit(`lgpd-exclusao:${ip}`, 3, 24 * 60 * 60_000)
+    if (!allowed) return NextResponse.json({ error: 'Limite de solicitações atingido. Tente novamente amanhã.' }, { status: 429 })
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
