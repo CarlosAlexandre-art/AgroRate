@@ -1,5 +1,1 @@
-import { redirect } from 'next/navigation'
-
-export default function OryonLegalDashboardPage() {
-  redirect('/oryon-legal')
-}
+export { default } from '@/app/oryon-legal/page'
