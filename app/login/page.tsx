@@ -117,13 +117,7 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <div className="my-5 flex items-center gap-3">
-            <div className="flex-1 h-px bg-slate-100" />
-            <span className="text-xs text-slate-300">ou</span>
-            <div className="flex-1 h-px bg-slate-100" />
-          </div>
-
-          <GoogleButton />
+          {/* Google login temporariamente oculto — aguardando configuração Google Cloud */}
 
           <div className="my-4 flex items-center gap-3">
             <div className="flex-1 h-px bg-slate-100" />

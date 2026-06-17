@@ -23,7 +23,7 @@ export const PLANO_LIMITES = {
   },
   pro: {
     nome: 'Profissional',
-    preco: 'R$ 147/mês ou R$ 1.470/ano',
+    preco: 'R$ 49/mês ou R$ 480/ano',
     scoreCalculo: true,
     scoreHistorico: true,
     simulacaoCredito: true,
@@ -39,7 +39,7 @@ export const PLANO_LIMITES = {
   },
   enterprise: {
     nome: 'Empresarial',
-    preco: 'R$ 397/mês ou R$ 3.970/ano',
+    preco: 'R$ 149/mês ou R$ 1.440/ano',
     scoreCalculo: true,
     scoreHistorico: true,
     simulacaoCredito: true,
