@@ -97,7 +97,7 @@ Formato obrigatório:
     }
 
     // Email para a advogada
-    if (RESEND_KEY && dadosUsuario?.nome) {
+    if (RESEND_KEY) {
       const vulnHtml = (diagnostico.vulnerabilidades as Array<{ tipo: string; descricao: string }>)
         ?.map((v) => `<div style="padding:8px 0;font-size:14px;color:#374151">${v.tipo} ${v.descricao}</div>`)
         .join('') ?? ''
@@ -141,16 +141,22 @@ Formato obrigatório:
         </div>
       </div>`
 
-      await fetch('https://api.resend.com/emails', {
+      const resendRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: 'ORYON Legal <noreply@oryonag.com.br>',
           to: ADVOGADA_EMAIL,
-          subject: `⚖️ Diagnóstico — ${dadosUsuario.nome} · Score ${scoreVal}/100`,
+          subject: `⚖️ Diagnóstico — ${dadosUsuario?.nome ?? 'Anônimo'} · Score ${scoreVal}/100`,
           html,
         }),
       })
+      const resendBody = await resendRes.json()
+      if (!resendRes.ok) {
+        console.error('Resend error:', JSON.stringify(resendBody))
+      } else {
+        console.log('Resend ok — id:', resendBody.id, '— to:', ADVOGADA_EMAIL)
+      }
     }
 
     return NextResponse.json({ ok: true, diagnostico, leadId })
