@@ -83,7 +83,8 @@ export default function OryonLegalPage() {
       setDiagnostico(data.diagnostico)
       setLeadId(data.leadId ?? null)
       setEtapa('resultado')
-    } catch {
+    } catch (err) {
+      console.error('diagnostico fetch error:', err)
       setDiagnostico({ score: 45, nivel: 'ALTO', vulnerabilidades: [{ tipo: '🔴', descricao: 'Pendências identificadas' }], recomendacao: 'Consultoria jurídica recomendada', prioridade: 'ALTA' })
       setEtapa('resultado')
     }
