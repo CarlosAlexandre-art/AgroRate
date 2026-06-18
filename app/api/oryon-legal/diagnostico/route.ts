@@ -97,6 +97,7 @@ Formato obrigatório:
     }
 
     // Email para a advogada
+    console.log('Email block — RESEND_KEY:', !!RESEND_KEY, '— to:', ADVOGADA_EMAIL, '— nome:', dadosUsuario?.nome)
     if (RESEND_KEY) {
       const vulnHtml = (diagnostico.vulnerabilidades as Array<{ tipo: string; descricao: string }>)
         ?.map((v) => `<div style="padding:8px 0;font-size:14px;color:#374151">${v.tipo} ${v.descricao}</div>`)
