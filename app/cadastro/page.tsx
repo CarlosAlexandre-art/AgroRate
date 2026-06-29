@@ -1,9 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import LogoWhite from '@/components/LogoWhite'
 import GoogleButton from '@/components/GoogleButton'
 
@@ -14,24 +12,27 @@ export default function CadastroPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const router = useRouter()
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const supabase = createClient()
-    const { data, error: err } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name } },
+
+    const res = await fetch('/api/auth/cadastrar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password }),
     })
-    if (err) { setError(err.message); setLoading(false); return }
-    if (data.session) {
-      router.push('/dashboard')
-    } else {
-      setSuccess(true)
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      setError(data.error || 'Erro ao criar conta. Tente novamente.')
+      setLoading(false)
+      return
     }
+
+    setSuccess(true)
     setLoading(false)
   }
 
@@ -45,8 +46,11 @@ export default function CadastroPage() {
           <p className="text-slate-500 text-sm mb-2 leading-relaxed">
             Enviamos um link de confirmação para
           </p>
-          <p className="font-semibold text-slate-800 text-sm mb-6 break-all">{email}</p>
-          <p className="text-xs text-slate-400 mb-6">Clique no link do e-mail para ativar sua conta e acessar o dashboard.</p>
+          <p className="font-semibold text-slate-800 text-sm mb-4 break-all">{email}</p>
+          <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+            Clique no link do e-mail para ativar sua conta.<br/>
+            Não recebeu? Verifique a pasta de spam.
+          </p>
           <Link href="/login" className="block w-full bg-[#065f46] text-white font-bold py-3.5 rounded-xl hover:bg-[#047857] transition-colors text-center">
             Ir para o login
           </Link>
@@ -57,12 +61,10 @@ export default function CadastroPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#065f46] via-emerald-700 to-teal-800 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background orbs */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
       <div className="absolute bottom-0 right-0 w-80 h-80 bg-emerald-400/10 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
 
       <div className="w-full max-w-sm relative">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block mb-5">
             <LogoWhite />
@@ -71,7 +73,6 @@ export default function CadastroPage() {
           <p className="text-emerald-200 text-sm">Calcule seu score de crédito rural em minutos</p>
         </div>
 
-        {/* Banner SmartAgroOS — ATENÇÃO para usuários existentes */}
         <div className="bg-amber-400/20 border border-amber-300/30 rounded-2xl px-4 py-3 mb-4 flex items-start gap-3">
           <div className="text-xl flex-shrink-0">⚠️</div>
           <div>
@@ -85,9 +86,7 @@ export default function CadastroPage() {
           </div>
         </div>
 
-        {/* Card do formulário */}
         <div className="bg-white rounded-2xl p-6 shadow-2xl">
-          {/* Benefícios rápidos */}
           <div className="flex items-center justify-around mb-5 pb-4 border-b border-slate-100">
             {[
               { icon: '✅', label: 'Grátis' },
