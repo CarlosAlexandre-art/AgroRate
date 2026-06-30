@@ -8,7 +8,7 @@ export async function sendEmailConfirmation(name: string, email: string, confirm
   const resend = getResend()
   const firstName = name.split(' ')[0]
   await resend.emails.send({
-    from: 'AgroRate <noreply@parceirosdeproposito.com>',
+    from: process.env.RESEND_FROM ?? 'AgroRate <noreply@oryonag.com.br>',
     to: email,
     subject: 'Confirme seu e-mail para acessar o AgroRate',
     html: `
